@@ -1,0 +1,283 @@
+{
+    "problems":[
+    {
+        "id": "lc_003",
+        "title": "Longest Substring Without Repeating Characters",
+        "difficulty": "medium",
+
+        "topics": [
+            "sliding_window",
+            "two_pointers",
+            "hash_map"
+        ],
+
+        "problem_summary": "Given a string s, find the length of the longest substring without repeating characters.",
+
+        "canonical_idea": {
+            "pattern": "sliding_window",
+            "one_liner": "Maintain a window with unique characters using two pointers and a hashmap to track last seen indices."
+        },
+
+        "quiz": {
+            "question": "What is the main idea to solve this problem efficiently?",
+            "options": [
+            {
+                "id": "A",
+                "text": "Use a sliding window with two pointers and a hashmap to maintain unique characters",
+                "is_correct": true,
+                "tags": ["sliding_window", "hash_map"]
+            },
+            {
+                "id": "B",
+                "text": "Use dynamic programming where dp[i] is the longest valid substring ending at i",
+                "is_correct": false,
+                "why_wrong": "DP works but essentially simulates sliding window and adds unnecessary complexity.",
+                "tags": ["dp"]
+            },
+            {
+                "id": "C",
+                "text": "Generate all substrings and check uniqueness using a set",
+                "is_correct": false,
+                "why_wrong": "This results in O(n²) substrings and fails time constraints.",
+                "tags": ["bruteforce"]
+            },
+            {
+                "id": "D",
+                "text": "Sort the string and count unique characters",
+                "is_correct": false,
+                "why_wrong": "Sorting destroys substring order, which is essential.",
+                "tags": ["incorrect_logic"]
+            }
+            ]
+        },
+
+        "key_insight": "When a repeated character is found, move the left pointer just after its last occurrence.",
+
+
+        "pseudo_code": [
+            "left = 0",
+            "for right in range(n):",
+            "  if s[right] seen and last_seen[s[right]] >= left:",
+            "    left = last_seen[s[right]] + 1",
+            "  update last_seen[s[right]] = right",
+            "  answer = max(answer, right - left + 1)"
+        ],
+
+        "common_traps": [
+            "Moving left pointer one step instead of jumping to last_seen + 1",
+            "Forgetting to update last seen index",
+            "Resetting window unnecessarily"
+        ]
+    },
+    {
+        "id": "lc_242",
+        "title": "Valid Anagram",
+        "difficulty": "easy",
+        "topics": [
+            "hash_map",
+            "string",
+            "sorting",
+            "frequency_counting"
+        ],
+        "problem_summary": "Given two strings s and t, determine if they are anagrams of each other (contain the same characters with the same frequencies).",
+        "canonical_idea": {
+            "pattern": "frequency_counting",
+            "one_liner": "Count character frequencies using a hashmap or fixed array, then compare counts."
+        },
+        "quiz": {
+            "question": "What is the most efficient approach for this problem given lowercase English letters only?",
+            "options": [
+            {
+                "id": "A",
+                "text": "Use a fixed-size array of 26 to count character frequencies",
+                "is_correct": true,
+                "tags": ["array", "constant_space"]
+            },
+            {
+                "id": "B",
+                "text": "Sort both strings and compare them",
+                "is_correct": false,
+                "why_wrong": "O(n log n) time is worse than O(n) for frequency counting.",
+                "tags": ["sorting"]
+            },
+            {
+                "id": "C",
+                "text": "Use nested loops to compare each character",
+                "is_correct": false,
+                "why_wrong": "O(n²) time; very inefficient for large strings.",
+                "tags": ["bruteforce"]
+            },
+            {
+                "id": "D",
+                "text": "Use two hash maps to store character counts separately",
+                "is_correct": false,
+                "why_wrong": "Works, but uses extra space; single array approach is optimal.",
+                "tags": ["hash_map"]
+            }
+            ]
+        },
+        "key_insight": "If strings are anagrams, their character frequency distributions are identical.",
+        "pseudo_code": [
+            "if len(s) != len(t): return false",
+            "count = array of 26 zeros",
+            "for i from 0 to len(s)-1:",
+            "  count[s[i]-'a']++",
+            "  count[t[i]-'a']--",
+            "for each val in count:",
+            "  if val != 0: return false",
+            "return true"
+        ],
+        "common_traps": [
+            "Not checking string lengths first",
+            "Forgetting to handle case sensitivity when not specified",
+            "Using sorting when frequency counting is more efficient"
+        ]
+    },
+    {
+        "id": "lc_347",
+        "title": "Top K Frequent Elements",
+        "difficulty": "medium",
+        "topics": [
+            "hash_map",
+            "heap",
+            "bucket_sort",
+            "frequency_counting"
+        ],
+        "problem_summary": "Given an integer array nums and an integer k, return the k most frequent elements in the array.",
+        "canonical_idea": {
+            "pattern": "bucket_sort",
+            "one_liner": "Use frequency counting with buckets where index represents frequency to collect top k in O(n) time."
+        },
+        "quiz": {
+            "question": "Which approach gives the best time complexity for finding top k frequent elements?",
+            "options": [
+            {
+                "id": "A",
+                "text": "Bucket sort: create frequency buckets and collect from highest frequency down",
+                "is_correct": true,
+                "tags": ["bucket_sort", "linear_time"]
+            },
+            {
+                "id": "B",
+                "text": "Min-heap: maintain heap of size k to track top frequencies",
+                "is_correct": false,
+                "why_wrong": "O(n log k) is good but not optimal; bucket sort gives O(n).",
+                "tags": ["heap"]
+            },
+            {
+                "id": "C",
+                "text": "Sort frequency map by values",
+                "is_correct": false,
+                "why_wrong": "O(n log n) due to sorting all unique elements.",
+                "tags": ["sorting"]
+            },
+            {
+                "id": "D",
+                "text": "Quickselect on frequency array",
+                "is_correct": false,
+                "why_wrong": "Although average O(n), Quickselect does not guarantee O(n) in the worst case, unlike bucket sort.",
+                "tags": ["quickselect"]
+            }
+            ]
+        },
+        "key_insight": "Maximum frequency is at most n, so we can use an array where index = frequency to group elements.",
+        "pseudo_code": [
+            "count = frequency map of nums",
+            "buckets = array of lists of size len(nums)+1",
+            "for num, freq in count.items():",
+            "  buckets[freq].append(num)",
+            "result = []",
+            "for i from len(buckets)-1 down to 1:",
+            "  for num in buckets[i]:",
+            "    result.append(num)",
+            "    if len(result) == k: return result"
+        ],
+        "common_traps": [
+            "Using max-heap instead of min-heap for heap approach",
+            "Creating bucket array of size n instead of n+1",
+            "Not handling frequency ties correctly in sorting approaches"
+        ]
+    },
+    {
+        "id": "lc_138",
+        "title": "Copy Linked List with Random Pointer",
+        "difficulty": "medium",
+        "topics": [
+            "linked_list",
+            "hash_map",
+            "two_pass",
+            "pointer_manipulation"
+        ],
+        "problem_summary": "Create a deep copy of a linked list where each node has both next and random pointers to other nodes.",
+        "canonical_idea": {
+            "pattern": "hash_map_two_pass",
+            "one_liner": "Use a hashmap to map original nodes to copies, then connect next and random pointers using the map."
+        },
+        "quiz": {
+            "question": "Which approach uses a hashmap to explicitly map original nodes to their copies?",
+            "options": [
+            {
+                "id": "A",
+                "text": "Two-pass hashmap: create all copies first, then connect pointers using the map",
+                "is_correct": true,
+                "tags": ["hash_map", "two_pass", "simple"]
+            },
+            {
+                "id": "B",
+                "text": "Interleave nodes in original list for O(1) space",
+                "is_correct": false,
+                "why_wrong": "More complex, can corrupt original list if not careful, harder to debug.",
+                "tags": ["space_optimized", "complex"]
+            },
+            {
+                "id": "C",
+                "text": "Recursion with hashmap for memoization",
+                "is_correct": false,
+                "why_wrong": "Elegant but risks stack overflow for long lists; iterative is safer.",
+                "tags": ["recursion", "memoization"]
+            },
+            {
+                "id": "D",
+                "text": "One-pass hashmap using defaultdict",
+                "is_correct": false,
+                "why_wrong": "Works but less intuitive; two-pass is clearer for understanding.",
+                "tags": ["hash_map", "one_pass"]
+            }
+            ]
+        },
+        "key_insight": "Use a hashmap to maintain a one-to-one mapping between original nodes and their copies to handle arbitrary random pointers.",
+        "pseudo_code": [
+            "oldToCopy = {None: None}",
+            "curr = head",
+            "while curr:",
+            "  oldToCopy[curr] = Node(curr.val)",
+            "  curr = curr.next",
+            "curr = head",
+            "while curr:",
+            "  copy = oldToCopy[curr]",
+            "  copy.next = oldToCopy[curr.next]",
+            "  copy.random = oldToCopy[curr.random]",
+            "  curr = curr.next",
+            "return oldToCopy[head]"
+        ],
+        "common_traps": [
+            "Creating duplicate copies for nodes pointed by multiple randoms",
+            "Forgetting to handle null random pointers in hashmap lookup",
+            "Not restoring original list in space-optimized interleaving approach"
+        ]
+    },
+    { 
+        "id": "lc_023", 
+        "title": "Merge K Sorted Linked Lists", 
+        "difficulty": "hard", 
+        "topics": [ "linked_list", "heap", "divide_and_conquer", "merge_sort" ], 
+        "problem_summary": "Merge k sorted linked lists into one sorted linked list.", 
+        "canonical_idea": { "pattern": "min_heap", "one_liner": "Use a min-heap to always extract the smallest node from the k lists, then add its next node back to the heap." }, 
+        "quiz": { 
+            "question": "What is the most efficient approach to merge k sorted linked lists?", 
+            "options": [ { "id": "A", "text": "Use a min-heap with size k to always get the smallest node", "is_correct": true, "tags": ["heap", "optimal"] }, { "id": "B", "text": "Merge lists one by one sequentially", "is_correct": false, "why_wrong": "O(k * N) time where N is total nodes - inefficient for large k.", "tags": ["naive", "sequential"] }, { "id": "C", "text": "Collect all values into an array, sort it, then rebuild list", "is_correct": false, "why_wrong": "O(N log N) time due to sorting, worse than O(N log k) with heap.", "tags": ["bruteforce", "sorting"] }, { "id": "D", "text": "Unbalanced divide-and-conquer merges (merge current result with the next list repeatedly)", "is_correct": false, "why_wrong": "This effectively reduces to sequential merging with O(N·k) time, which is worse than the optimal O(N log k) heap-based approach.", "tags": ["divide_conquer", "merge"] } ] }, 
+        "key_insight": "Maintain a min-heap of the current smallest node from each list to efficiently merge in O(N log k) time.", 
+        "pseudo_code": [ "import heapq", "dummy = ListNode()", "curr = dummy", "heap = []", "for i, list in enumerate(lists):", " if list:", " heapq.heappush(heap, (list.val, i, list))", "while heap:", " val, i, node = heapq.heappop(heap)", " curr.next = node", " curr = curr.next", " if node.next:", " heapq.heappush(heap, (node.next.val, i, node.next))", "return dummy.next" ], 
+        "common_traps": [ "Forgetting to handle empty lists in the input array", "Not using unique identifier (index) in heap to avoid comparing ListNode objects", "Pushing null nodes into the heap without checking" ] }
+]
+}
