@@ -1,0 +1,38 @@
+[
+  {
+    "id": "lc_003",
+    "title": "Longest Substring Without Repeating Characters",
+    "difficulty": "medium",
+    "topics": ["sliding_window", "two_pointers", "hash_map"],
+    "problem_summary": "Given a string s, find the length of the longest substring without repeating characters.",
+    "quiz": {
+      "question": "What is the main idea to solve this problem efficiently?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use a sliding window with two pointers and a hashmap to maintain unique characters",
+          "is_correct": true
+        },
+        {
+          "id": "B",
+          "text": "Use dynamic programming where dp[i] is the longest valid substring ending at i",
+          "is_correct": false,
+          "why_wrong": "DP adds unnecessary complexity."
+        },
+        {
+          "id": "C",
+          "text": "Generate all substrings and check uniqueness using a set",
+          "is_correct": false,
+          "why_wrong": "O(n²) time complexity."
+        },
+        {
+          "id": "D",
+          "text": "Sort the string and count unique characters",
+          "is_correct": false,
+          "why_wrong": "Sorting breaks substring order."
+        }
+      ]
+    },
+    "key_insight": "When a repeated character is found, move the left pointer just after its last occurrence."
+  }
+]
