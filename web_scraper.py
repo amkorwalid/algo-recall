@@ -57,10 +57,10 @@ class AlgorithmScraper:
             return data
             
         except requests.RequestException as e:
-            print(f"Error scraping {url}: {e}")
+            print(f"Network error while scraping {url}: {e}")
             return None
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            print(f"Parsing error for {url}: {e}")
             return None
     
     def extract_text_content(self, url: str, selector: Optional[str] = None) -> Optional[str]:
@@ -85,8 +85,8 @@ class AlgorithmScraper:
                 return element.get_text(strip=True) if element else None
             else:
                 # Remove script and style elements
-                for script in soup(["script", "style"]):
-                    script.decompose()
+                for element in soup(["script", "style"]):
+                    element.decompose()
                 return soup.get_text(strip=True, separator=' ')
                 
         except Exception as e:

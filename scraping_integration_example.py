@@ -26,7 +26,8 @@ def convert_scraped_to_quiz_format(scraped_problem):
         "topics": scraped_problem.get('topics', []),
         "problem_summary": scraped_problem.get('description', ''),
         "quiz": {
-            "question": "What is the optimal approach to solve this problem?",
+            "question": scraped_problem.get('quiz_question', 
+                                           f"What is the main idea to solve '{scraped_problem.get('title', 'this problem')}' efficiently?"),
             "options": [
                 {
                     "id": "A",
