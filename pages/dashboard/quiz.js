@@ -4,7 +4,7 @@ import Header from "../../components/dashboard/Header";
 import QuizCard from "../../components/dashboard/QuizCard";
 
 export default function QuizPage() {
-  const [quiz, setQuiz] = useState(null);
+  const [problem, setProblem] = useState(null); // Stores the entire problem object, not just quiz
   const [data, setData] = useState({ problems: [], solvedQuizzes: [] });
 
   const loadRandomQuiz = (data) => {
@@ -15,12 +15,13 @@ export default function QuizPage() {
     const unsolvedQuizzes = problems.filter(
       (problem) => !solvedQuizzes.includes(problem.id)
     );
+
     if (unsolvedQuizzes.length > 0) {
-      const randomQuiz =
+      const randomProblem =
         unsolvedQuizzes[Math.floor(Math.random() * unsolvedQuizzes.length)];
-      setQuiz(randomQuiz.quiz);
+      setProblem(randomProblem); // Update full problem object
     } else {
-      setQuiz(null); // No quizzes left
+      setProblem(null); // No quizzes left
     }
   };
 
@@ -46,8 +47,8 @@ export default function QuizPage() {
         <div className="container mx-auto px-6">
           <h1 className="text-2xl font-bold mt-6">Quiz</h1>
           <div className="mt-6">
-            {quiz ? (
-              <QuizCard quiz={quiz} onNext={handleNextQuiz} />
+            {problem ? (
+              <QuizCard problem={problem} onNext={handleNextQuiz} />
             ) : (
               <p className="text-center text-gray-600">
                 All quizzes are completed. Congratulations!
