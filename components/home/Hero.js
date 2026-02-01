@@ -1,25 +1,25 @@
+import { SignUpButton } from '@clerk/nextjs';
 import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="bg-blue-50 py-20" id="home">
-      <div className="container mx-auto px-4 flex flex-col-reverse lg:flex-row items-center">
-        <div className="text-center lg:text-left lg:w-1/2">
-          <h2 className="text-4xl font-extrabold text-blue-600">
-            Master Competitive Programming in a Smarter Way!
-          </h2>
-          <p className="text-gray-700 mt-4">
-            Turn LeetCode and Codeforces practice into interactive quizzes that help you revise solutions quickly.
-          </p>
-          <Link href="/dashboard/">
-            <button className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700">
-              Get Started
-            </button>
-          </Link>
+    <section className="bg-[#222222] text-[#FAF3E1] py-20">
+      <div className="container mx-auto px-6 lg:px-12 text-center">
+        <h1 className="text-4xl lg:text-6xl font-extrabold">
+          Remember Algorithms. Not Just Solve Them.
+        </h1>
+        <p className="mt-4 text-lg lg:text-2xl text-[#F5E7C6]">
+          AlgoRecall helps you retain LeetCode solutions by turning problems
+          into fast, intelligent quizzes that lock in patterns and core ideas.
+        </p>
+        <div className="mt-6 flex justify-center space-x-4">
+            <Link href="/dashboard" className="bg-[#FA8112] text-[#222222] px-6 py-3 rounded-lg font-medium shadow hover:bg-[#E9720F] transition-colors duration-200">
+              👉 Start Free
+            </Link>
         </div>
-        <div className="lg:w-1/2">
-          <img src="/images/hero-placeholder.svg" alt="Hero illustration" />
-        </div>
+        <p className="mt-3 text-sm text-muted text-[#F5E7C699] italic">
+          Develop problem-solving skills and coding interview preparation.
+        </p>
       </div>
     </section>
   );

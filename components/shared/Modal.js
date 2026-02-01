@@ -6,7 +6,7 @@ export default function Modal({ children, onClose }) {
           <h2 className="text-xl font-semibold text-blue-950">Feedback</h2>
           <button
             onClick={onClose}
-            className="text-gray-600 hover:text-gray-900 font-bold text-lg"
+            className="text-gray-600 hover:text-gray-900 font-bold text-lg transition-colors duration-200"
           >
             ×
           </button>
@@ -15,7 +15,7 @@ export default function Modal({ children, onClose }) {
         <div className="mt-4 text-right">
           <button
             onClick={onClose}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors duration-200"
           >
             Close
           </button>

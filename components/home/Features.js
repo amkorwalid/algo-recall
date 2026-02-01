@@ -1,34 +1,45 @@
 export default function Features() {
   const features = [
     {
-      title: 'Interactive Quizzes',
+      title: 'AI-Generated Quizzes',
       description:
-        'Learn and revise code concepts with multiple-choice questions tailored for fast recall.',
+        'Each problem is converted into concept-focused multiple-choice and reasoning questions.',
     },
     {
-      title: 'Track Progress',
+      title: 'Pattern-Based Learning',
       description:
-        'Visualize your learning stats and see how you\'re improving.',
+        'Problems are organized by underlying algorithms: sliding window, DP, greedy, hashing, etc.',
     },
     {
-      title: 'Personalized Practice',
-      description: 'Filter questions by difficulty and topic to focus on your weak areas.',
+      title: 'Fast Review Mode',
+      description: 'Refresh multiple problems in minutes instead of hours.',
     },
     {
-      title: 'Gamified Learning',
-      description:
-        'Earn badges, streaks, and compete with friends.',
+      title: 'Key Insights & Traps',
+      description: 'Learn what matters and avoid common mistakes like a pro.',
+    },
+    {
+      title: 'Progress Tracking',
+      description: 'See mastered patterns and focus on improvement areas.',
     },
   ];
+
   return (
-    <section className="py-20">
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="text-3xl font-bold text-blue-600">Key Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mt-8">
+    <section id="features" className="bg-[#222222] text-[#FAF3E1] py-16">
+      <div className="container mx-auto px-6 lg:px-12">
+        <h2 className="text-3xl lg:text-4xl font-bold">
+          Everything You Need to Actually Remember Algorithms
+        </h2>
+        <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="p-4 border rounded-lg">
-              <h3 className="text-xl font-semibold text-gray-800">{feature.title}</h3>
-              <p className="text-gray-600 mt-2">{feature.description}</p>
+            <div
+              key={index}
+              className="bg-[#2A2A2A] px-6 py-8 rounded-lg shadow hover:bg-[#303030] transition-colors duration-200"
+            >
+              <h3 className="text-xl font-semibold text-[#FA8112]">
+                {feature.title}
+              </h3>
+              <p className="text-sm text-[#F5E7C6] mt-2">{feature.description}</p>
             </div>
           ))}
         </div>
