@@ -24,6 +24,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "pages/protected.jsx", "pages/dashboard/index.jsx"  ],
+, "pages/protected.jsx", "pages/dashboard/index.tsx"  ],
   "exclude": ["node_modules"]
 }
