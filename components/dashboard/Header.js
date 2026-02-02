@@ -1,18 +1,71 @@
-import { SignedIn, UserButton, useUser  } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 export default function Header() {
   const { user } = useUser();
+
   return (
-    <header className="bg-blue-600 shadow">
+    <header 
+      className="shadow-md border-b"
+      style={{ 
+        backgroundColor: '#2A2A2A',
+        borderColor: 'rgba(255,255,255,0.08)'
+      }}
+    >
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Dashboard</h1>
-        <div className="flex items-center space-x-4">
-          <SignedIn>
-            {user?.firstName || "User"}
-            <UserButton />
-          </SignedIn>
+        {/* Page Title / Greeting */}
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#FAF3E1' }}>
+            AlgoRecall
+          </h1>
+          {user && (
+            <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+              Welcome back, {user.firstName || 'User'}!
+            </p>
+          )}
         </div>
-        
+
+        {/* User Actions */}
+        <div className="flex items-center space-x-4">
+          {/* Notifications (optional placeholder) */}
+          <button 
+            className="relative p-2 rounded-lg transition duration-300"
+            style={{ backgroundColor: '#303030' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FA8112'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#303030'}
+          >
+            <span className="text-xl">🔔</span>
+            {/* Notification badge */}
+            <span 
+              className="absolute top-0 right-0 w-3 h-3 rounded-full"
+              style={{ backgroundColor: '#FA8112' }}
+            ></span>
+          </button>
+
+          {/* Settings */}
+          <button 
+            className="p-2 rounded-lg transition duration-300"
+            style={{ backgroundColor: '#303030' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FA8112'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#303030'}
+          >
+            <span className="text-xl">⚙️</span>
+          </button>
+
+          {/* User Profile Button (Clerk) */}
+          <div className="flex items-center">
+            <UserButton 
+              appearance={{
+                elements: {
+                  avatarBox: "w-10 h-10 rounded-full border-2",
+                  userButtonPopoverCard: {
+                    backgroundColor: '#303030',
+                    color: '#FAF3E1',
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
       </div>
     </header>
   );

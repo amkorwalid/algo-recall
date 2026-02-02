@@ -1,17 +1,140 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
 
 export default function Sidebar() {
+  const router = useRouter();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const navItems = [
+    { name: "Dashboard", icon: "🏠", path: "/dashboard" },
+    { name: "Problems", icon: "📚", path: "/dashboard/problems" },
+    { name: "Quiz", icon: "🧠", path: "/dashboard/quiz" },
+    { name: "Progress", icon: "📊", path: "/dashboard/progress" },
+    { name: "Favorites", icon: "⭐", path: "/dashboard/favorites" },
+    { name: "Settings", icon: "⚙️", path: "/dashboard/settings" },
+  ];
+
+  const isActive = (path) => router.pathname === path;
+
   return (
-    <div className="h-screen bg-gray-800 text-white flex flex-col items-center py-8">
-      <h2 className="text-2xl font-semibold mb-6">AlgoRecall</h2>
-      <nav className="space-y-4">
-        <Link href="/dashboard/problems">
-          <span className="block bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 transition">Problems Set</span>
-        </Link>
-        <Link href="/dashboard/quiz">
-          <span className="block bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 transition">Quiz</span>
-        </Link>
+    <aside
+      className={`h-screen flex flex-col border-r transition-all duration-300 ${
+        isCollapsed ? "w-20" : "w-64"
+      }`}
+      style={{
+        backgroundColor: "#2A2A2A",
+        borderColor: "rgba(255,255,255,0.08)",
+      }}
+    >
+      {/* Logo / Brand */}
+      <div
+        className="p-6 border-b flex items-center justify-between"
+        style={{ borderColor: "rgba(255,255,255,0.08)" }}
+      >
+        {!isCollapsed && (
+          <div>
+            <h2 className="text-2xl font-bold" style={{ color: "#FA8112" }}>
+              AlgoRecall
+            </h2>
+            <p className="text-xs" style={{ color: "rgba(245,231,198,0.6)" }}>
+              Master Algorithms
+            </p>
+          </div>
+        )}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 rounded-lg transition duration-300"
+          style={{ backgroundColor: "#303030" }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FA8112")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#303030")}
+        >
+          <span className="text-lg">{isCollapsed ? "→" : "←"}</span>
+        </button>
+      </div>
+
+      {/* Navigation Items */}
+      <nav className="flex-1 py-6 overflow-y-auto">
+        <ul className="space-y-2 px-3">
+          {navItems.map((item) => (
+            <li key={item.path}>
+              <Link
+                href={item.path}
+                className={`flex items-center px-4 py-3 rounded-lg transition duration-300 ${
+                  isActive(item.path) ? "shadow-lg" : ""
+                }`}
+                style={{
+                  backgroundColor: isActive(item.path)
+                    ? "#FA8112"
+                    : "transparent",
+                  color: isActive(item.path) ? "#222222" : "#F5E7C6",
+                  display: "flex",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive(item.path)) {
+                    e.currentTarget.style.backgroundColor = "#303030";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive(item.path)) {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }
+                }}
+              >
+                <span className="text-2xl">{item.icon}</span>
+                {!isCollapsed && (
+                  <span className="ml-3 font-medium">{item.name}</span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
-    </div>
+
+      {/* Footer / Help Section */}
+      <div
+        className="p-4 border-t"
+        style={{ borderColor: "rgba(255,255,255,0.08)" }}
+      >
+        {!isCollapsed ? (
+          <div
+            className="p-4 rounded-lg"
+            style={{ backgroundColor: "rgba(250,129,18,0.15)" }}
+          >
+            <p className="text-sm font-semibold" style={{ color: "#FA8112" }}>
+              💡 Need Help?
+            </p>
+            <p className="text-xs mt-1" style={{ color: "#F5E7C6" }}>
+              Check out our guides and tutorials.
+            </p>
+            <button
+              className="mt-3 w-full py-2 rounded-lg text-sm font-medium transition duration-300"
+              style={{ backgroundColor: "#FA8112", color: "#222222" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#E9720F")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#FA8112")
+              }
+            >
+              Learn More
+            </button>
+          </div>
+        ) : (
+          <button
+            className="w-full p-3 rounded-lg transition duration-300"
+            style={{ backgroundColor: "#303030" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#FA8112")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "#303030")
+            }
+          >
+            <span className="text-xl">❓</span>
+          </button>
+        )}
+      </div>
+    </aside>
   );
 }
