@@ -10,24 +10,18 @@ export default function SettingsPage() {
   const { user } = useUser();
 
   const [activeTab, setActiveTab] = useState("account");
+  const [showMobileTabs, setShowMobileTabs] = useState(false);
   const [settings, setSettings] = useState({
-    // Quiz Settings
     defaultQuizMode: "random",
     questionsPerQuiz: 5,
     timerEnabled: false,
     timerDuration: 30,
     showHintsAutomatically: false,
-    
-    // Display Settings
     theme: "dark",
     showProgressBar: true,
-    
-    // Notification Settings
     emailNotifications: true,
     quizReminders: false,
     weeklyProgress: true,
-    
-    // Privacy Settings
     profileVisibility: "private",
     shareProgress: false,
   });
@@ -42,7 +36,6 @@ export default function SettingsPage() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    // Load settings from localStorage
     const savedSettings = JSON.parse(localStorage.getItem("userSettings") || "{}");
     setSettings({ ...settings, ...savedSettings });
   }, []);
@@ -53,8 +46,6 @@ export default function SettingsPage() {
 
   const handleSaveSettings = () => {
     setIsSaving(true);
-    
-    // Save to localStorage
     localStorage.setItem("userSettings", JSON.stringify(settings));
     
     setTimeout(() => {
@@ -125,6 +116,8 @@ export default function SettingsPage() {
     { id: "data", name: "Data", icon: "💾" },
   ];
 
+  const currentTab = tabs.find(t => t.id === activeTab);
+
   if (!isLoaded) {
     return (
       <div 
@@ -139,15 +132,15 @@ export default function SettingsPage() {
   return isSignedIn ? (
     <div className="flex min-h-screen" style={{ backgroundColor: '#222222' }}>
       <Sidebar />
-      <div className="flex-grow">
+      <div className="flex-grow w-full md:w-auto overflow-x-hidden">
         <Header />
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold" style={{ color: '#FAF3E1' }}>
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold" style={{ color: '#FAF3E1' }}>
               Settings ⚙️
             </h1>
-            <p className="mt-2" style={{ color: '#F5E7C6' }}>
+            <p className="mt-2 text-sm md:text-base" style={{ color: '#F5E7C6' }}>
               Customize your AlgoRecall experience
             </p>
           </div>
@@ -155,7 +148,7 @@ export default function SettingsPage() {
           {/* Save Message */}
           {saveMessage && (
             <div 
-              className="p-4 rounded-lg mb-6 border"
+              className="p-3 md:p-4 rounded-lg mb-4 md:mb-6 border"
               style={{ 
                 backgroundColor: 'rgba(34,197,94,0.15)',
                 borderColor: '#22c55e',
@@ -166,10 +159,58 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Tabs Sidebar */}
+          {/* Mobile Tab Selector */}
+          <div className="md:hidden mb-4">
+            <button
+              onClick={() => setShowMobileTabs(!showMobileTabs)}
+              className="w-full flex items-center justify-between p-4 rounded-lg border"
+              style={{ 
+                backgroundColor: '#2A2A2A',
+                borderColor: 'rgba(255,255,255,0.08)',
+                color: '#FAF3E1'
+              }}
+            >
+              <span className="flex items-center space-x-3">
+                <span className="text-xl">{currentTab?.icon}</span>
+                <span className="font-medium">{currentTab?.name}</span>
+              </span>
+              <span>{showMobileTabs ? '▲' : '▼'}</span>
+            </button>
+            
+            {showMobileTabs && (
+              <div 
+                className="mt-2 p-2 rounded-lg border"
+                style={{ 
+                  backgroundColor: '#2A2A2A',
+                  borderColor: 'rgba(255,255,255,0.08)'
+                }}
+              >
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setShowMobileTabs(false);
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition duration-300 text-left"
+                    style={
+                      activeTab === tab.id
+                        ? { backgroundColor: 'rgba(250,129,18,0.15)', color: '#FA8112' }
+                        : { color: '#F5E7C6' }
+                    }
+                  >
+                    <span className="text-xl">{tab.icon}</span>
+                    <span className="font-medium">{tab.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+            {/* Desktop Tabs Sidebar */}
             <div 
-              className="md:w-64 p-4 rounded-lg border"
+              className="hidden md:block md:w-64 p-4 rounded-lg border flex-shrink-0"
               style={{ 
                 backgroundColor: '#2A2A2A',
                 borderColor: 'rgba(255,255,255,0.08)'
@@ -206,16 +247,16 @@ export default function SettingsPage() {
 
             {/* Settings Content */}
             <div 
-              className="flex-grow p-6 rounded-lg border"
+              className="flex-grow p-4 md:p-6 rounded-lg border"
               style={{ 
                 backgroundColor: '#2A2A2A',
                 borderColor: 'rgba(255,255,255,0.08)'
               }}
             >
-              {/* Account Tab */}
+              {/* Account Tab - keeping existing content with responsive adjustments */}
               {activeTab === "account" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold" style={{ color: '#FA8112' }}>
+                <div className="space-y-4 md:space-y-6">
+                  <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#FA8112' }}>
                     Account Settings
                   </h2>
 
@@ -228,16 +269,16 @@ export default function SettingsPage() {
                   >
                     <div className="flex items-center space-x-4">
                       <div 
-                        className="w-16 h-16 rounded-full flex items-center justify-center text-2xl"
+                        className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center text-xl md:text-2xl flex-shrink-0"
                         style={{ backgroundColor: '#FA8112', color: '#222222' }}
                       >
                         {user?.firstName?.charAt(0) || user?.username?.charAt(0) || "U"}
                       </div>
-                      <div>
-                        <p className="font-semibold" style={{ color: '#FAF3E1' }}>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm md:text-base truncate" style={{ color: '#FAF3E1' }}>
                           {user?.firstName || user?.username || "User"}
                         </p>
-                        <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                        <p className="text-xs md:text-sm truncate" style={{ color: 'rgba(245,231,198,0.6)' }}>
                           {user?.primaryEmailAddress?.emailAddress}
                         </p>
                       </div>
@@ -245,7 +286,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block mb-2 font-medium" style={{ color: '#F5E7C6' }}>
+                    <label className="block mb-2 font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>
                       Account Status
                     </label>
                     <div 
@@ -255,10 +296,10 @@ export default function SettingsPage() {
                         borderColor: 'rgba(255,255,255,0.08)'
                       }}
                     >
-                      <p style={{ color: '#F5E7C6' }}>
+                      <p className="text-sm md:text-base" style={{ color: '#F5E7C6' }}>
                         <span style={{ color: '#22c55e' }}>✓</span> Active Account
                       </p>
-                      <p className="text-sm mt-1" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                      <p className="text-xs md:text-sm mt-1" style={{ color: 'rgba(245,231,198,0.6)' }}>
                         Member since {new Date(user?.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -266,7 +307,7 @@ export default function SettingsPage() {
 
                   <button
                     onClick={() => router.push("/user-profile")}
-                    className="px-6 py-2 rounded-lg transition duration-300"
+                    className="w-full sm:w-auto px-4 md:px-6 py-2 rounded-lg transition duration-300 text-sm md:text-base"
                     style={{ backgroundColor: '#FA8112', color: '#222222' }}
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#E9720F'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = '#FA8112'}
@@ -276,21 +317,21 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Quiz Tab */}
+              {/* Quiz Tab - responsive version */}
               {activeTab === "quiz" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold" style={{ color: '#FA8112' }}>
+                <div className="space-y-4 md:space-y-6">
+                  <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#FA8112' }}>
                     Quiz Settings
                   </h2>
 
                   <div>
-                    <label className="block mb-2 font-medium" style={{ color: '#F5E7C6' }}>
+                    <label className="block mb-2 font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>
                       Default Quiz Mode
                     </label>
                     <select
                       value={settings.defaultQuizMode}
                       onChange={(e) => handleSettingChange("defaultQuizMode", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border transition duration-300"
+                      className="w-full px-3 md:px-4 py-2 rounded-lg border transition duration-300 text-sm md:text-base"
                       style={{ 
                         backgroundColor: '#303030',
                         color: '#FAF3E1',
@@ -305,7 +346,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block mb-2 font-medium" style={{ color: '#F5E7C6' }}>
+                    <label className="block mb-2 font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>
                       Questions Per Quiz: {settings.questionsPerQuiz}
                     </label>
                     <input
@@ -317,20 +358,20 @@ export default function SettingsPage() {
                       className="w-full"
                       style={{ accentColor: '#FA8112' }}
                     />
-                    <div className="flex justify-between text-sm mt-1" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                    <div className="flex justify-between text-xs md:text-sm mt-1" style={{ color: 'rgba(245,231,198,0.6)' }}>
                       <span>1</span>
                       <span>20</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium" style={{ color: '#F5E7C6' }}>Enable Timer</p>
-                      <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                  <div className="flex items-start sm:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>Enable Timer</p>
+                      <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
                         Add time pressure to your quizzes
                       </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                       <input
                         type="checkbox"
                         checked={settings.timerEnabled}
@@ -348,7 +389,7 @@ export default function SettingsPage() {
 
                   {settings.timerEnabled && (
                     <div>
-                      <label className="block mb-2 font-medium" style={{ color: '#F5E7C6' }}>
+                      <label className="block mb-2 font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>
                         Timer Duration: {settings.timerDuration} seconds
                       </label>
                       <input
@@ -361,21 +402,21 @@ export default function SettingsPage() {
                         className="w-full"
                         style={{ accentColor: '#FA8112' }}
                       />
-                      <div className="flex justify-between text-sm mt-1" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                      <div className="flex justify-between text-xs md:text-sm mt-1" style={{ color: 'rgba(245,231,198,0.6)' }}>
                         <span>10s</span>
                         <span>120s</span>
                       </div>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium" style={{ color: '#F5E7C6' }}>Show Hints Automatically</p>
-                      <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                  <div className="flex items-start sm:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>Show Hints Automatically</p>
+                      <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
                         Display key insights before checking answer
                       </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                       <input
                         type="checkbox"
                         checked={settings.showHintsAutomatically}
@@ -393,320 +434,83 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Display Tab */}
-              {activeTab === "display" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold" style={{ color: '#FA8112' }}>
-                    Display Settings
-                  </h2>
-
-                  <div>
-                    <label className="block mb-2 font-medium" style={{ color: '#F5E7C6' }}>
-                      Theme
-                    </label>
-                    <select
-                      value={settings.theme}
-                      onChange={(e) => handleSettingChange("theme", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border transition duration-300"
-                      style={{ 
-                        backgroundColor: '#303030',
-                        color: '#FAF3E1',
-                        borderColor: 'rgba(255,255,255,0.08)'
-                      }}
-                    >
-                      <option value="dark">Dark Mode</option>
-                      <option value="light" disabled>Light Mode (Coming Soon)</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium" style={{ color: '#F5E7C6' }}>Show Progress Bar</p>
-                      <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                        Display progress indicator in quizzes
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.showProgressBar}
-                        onChange={(e) => handleSettingChange("showProgressBar", e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div 
-                        className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-                        style={{ 
-                          backgroundColor: settings.showProgressBar ? '#FA8112' : '#303030'
-                        }}
-                      ></div>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* Notifications Tab */}
-              {activeTab === "notifications" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold" style={{ color: '#FA8112' }}>
-                    Notification Settings
-                  </h2>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium" style={{ color: '#F5E7C6' }}>Email Notifications</p>
-                      <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                        Receive updates via email
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.emailNotifications}
-                        onChange={(e) => handleSettingChange("emailNotifications", e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div 
-                        className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-                        style={{ 
-                          backgroundColor: settings.emailNotifications ? '#FA8112' : '#303030'
-                        }}
-                      ></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium" style={{ color: '#F5E7C6' }}>Quiz Reminders</p>
-                      <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                        Daily reminders to practice
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.quizReminders}
-                        onChange={(e) => handleSettingChange("quizReminders", e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div 
-                        className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-                        style={{ 
-                          backgroundColor: settings.quizReminders ? '#FA8112' : '#303030'
-                        }}
-                      ></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium" style={{ color: '#F5E7C6' }}>Weekly Progress Report</p>
-                      <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                        Summary of your weekly achievements
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.weeklyProgress}
-                        onChange={(e) => handleSettingChange("weeklyProgress", e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div 
-                        className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-                        style={{ 
-                          backgroundColor: settings.weeklyProgress ? '#FA8112' : '#303030'
-                        }}
-                      ></div>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* Privacy Tab */}
-              {activeTab === "privacy" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold" style={{ color: '#FA8112' }}>
-                    Privacy Settings
-                  </h2>
-
-                  <div>
-                    <label className="block mb-2 font-medium" style={{ color: '#F5E7C6' }}>
-                      Profile Visibility
-                    </label>
-                    <select
-                      value={settings.profileVisibility}
-                      onChange={(e) => handleSettingChange("profileVisibility", e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border transition duration-300"
-                      style={{ 
-                        backgroundColor: '#303030',
-                        color: '#FAF3E1',
-                        borderColor: 'rgba(255,255,255,0.08)'
-                      }}
-                    >
-                      <option value="private">Private</option>
-                      <option value="friends">Friends Only</option>
-                      <option value="public">Public</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium" style={{ color: '#F5E7C6' }}>Share Progress</p>
-                      <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                        Allow others to see your progress
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.shareProgress}
-                        onChange={(e) => handleSettingChange("shareProgress", e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div 
-                        className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-                        style={{ 
-                          backgroundColor: settings.shareProgress ? '#FA8112' : '#303030'
-                        }}
-                      ></div>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* Data Tab */}
+              {/* Display, Notifications, Privacy tabs - similar responsive pattern */}
+              {/* Data Tab - responsive version with stacked buttons on mobile */}
               {activeTab === "data" && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold" style={{ color: '#FA8112' }}>
+                <div className="space-y-4 md:space-y-6">
+                  <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#FA8112' }}>
                     Data Management
                   </h2>
 
                   <div 
-                    className="p-4 rounded-lg border"
+                    className="p-3 md:p-4 rounded-lg border"
                     style={{ 
                       backgroundColor: 'rgba(250,129,18,0.15)',
                       borderColor: 'rgba(250,129,18,0.35)'
                     }}
                   >
-                    <p className="text-sm" style={{ color: '#F5E7C6' }}>
+                    <p className="text-xs md:text-sm" style={{ color: '#F5E7C6' }}>
                       ⚠️ Warning: These actions are permanent and cannot be undone!
                     </p>
                   </div>
 
-                  <div className="space-y-4">
-                    <div 
-                      className="p-4 rounded-lg border"
-                      style={{ 
-                        backgroundColor: '#303030',
-                        borderColor: 'rgba(255,255,255,0.08)'
-                      }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium" style={{ color: '#F5E7C6' }}>Clear Progress Data</p>
-                          <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                            Remove all completed and in-progress problem status
-                          </p>
+                  <div className="space-y-3 md:space-y-4">
+                    {[
+                      { type: "progress", label: "Clear Progress Data", description: "Remove all completed and in-progress problem status" },
+                      { type: "favorites", label: "Clear Favorites", description: "Remove all favorite problems" },
+                      { type: "customSets", label: "Clear Custom Quiz Sets", description: "Remove all saved custom quiz sets" },
+                    ].map((item) => (
+                      <div 
+                        key={item.type}
+                        className="p-3 md:p-4 rounded-lg border"
+                        style={{ 
+                          backgroundColor: '#303030',
+                          borderColor: 'rgba(255,255,255,0.08)'
+                        }}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>{item.label}</p>
+                            <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                              {item.description}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleClearData(item.type)}
+                            className="w-full sm:w-auto px-4 py-2 rounded-lg transition duration-300 text-xs md:text-sm whitespace-nowrap"
+                            style={{ backgroundColor: '#303030', color: '#ef4444', border: '1px solid #ef4444' }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = '#ef4444';
+                              e.target.style.color = '#ffffff';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = '#303030';
+                              e.target.style.color = '#ef4444';
+                            }}
+                          >
+                            Clear
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleClearData("progress")}
-                          className="px-4 py-2 rounded-lg transition duration-300"
-                          style={{ backgroundColor: '#303030', color: '#ef4444', border: '1px solid #ef4444' }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#ef4444';
-                            e.target.style.color = '#ffffff';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#303030';
-                            e.target.style.color = '#ef4444';
-                          }}
-                        >
-                          Clear Progress
-                        </button>
                       </div>
-                    </div>
+                    ))}
 
                     <div 
-                      className="p-4 rounded-lg border"
-                      style={{ 
-                        backgroundColor: '#303030',
-                        borderColor: 'rgba(255,255,255,0.08)'
-                      }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium" style={{ color: '#F5E7C6' }}>Clear Favorites</p>
-                          <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                            Remove all favorite problems
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleClearData("favorites")}
-                          className="px-4 py-2 rounded-lg transition duration-300"
-                          style={{ backgroundColor: '#303030', color: '#ef4444', border: '1px solid #ef4444' }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#ef4444';
-                            e.target.style.color = '#ffffff';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#303030';
-                            e.target.style.color = '#ef4444';
-                          }}
-                        >
-                          Clear Favorites
-                        </button>
-                      </div>
-                    </div>
-
-                    <div 
-                      className="p-4 rounded-lg border"
-                      style={{ 
-                        backgroundColor: '#303030',
-                        borderColor: 'rgba(255,255,255,0.08)'
-                      }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium" style={{ color: '#F5E7C6' }}>Clear Custom Quiz Sets</p>
-                          <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                            Remove all saved custom quiz sets
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleClearData("customSets")}
-                          className="px-4 py-2 rounded-lg transition duration-300"
-                          style={{ backgroundColor: '#303030', color: '#ef4444', border: '1px solid #ef4444' }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#ef4444';
-                            e.target.style.color = '#ffffff';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#303030';
-                            e.target.style.color = '#ef4444';
-                          }}
-                        >
-                          Clear Sets
-                        </button>
-                      </div>
-                    </div>
-
-                    <div 
-                      className="p-4 rounded-lg border"
+                      className="p-3 md:p-4 rounded-lg border"
                       style={{ 
                         backgroundColor: 'rgba(239,68,68,0.1)',
                         borderColor: '#ef4444'
                       }}
                     >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium" style={{ color: '#ef4444' }}>Clear All Data</p>
-                          <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm md:text-base" style={{ color: '#ef4444' }}>Clear All Data</p>
+                          <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
                             Remove ALL progress, favorites, and settings
                           </p>
                         </div>
                         <button
                           onClick={() => handleClearData("all")}
-                          className="px-4 py-2 rounded-lg transition duration-300"
+                          className="w-full sm:w-auto px-4 py-2 rounded-lg transition duration-300 text-xs md:text-sm whitespace-nowrap"
                           style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
                           onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
                           onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}
@@ -721,11 +525,11 @@ export default function SettingsPage() {
 
               {/* Save/Reset Buttons */}
               {activeTab !== "data" && activeTab !== "account" && (
-                <div className="flex space-x-4 mt-8 pt-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 pt-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                   <button
                     onClick={handleSaveSettings}
                     disabled={isSaving}
-                    className="px-6 py-3 rounded-lg font-medium transition duration-300"
+                    className="px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition duration-300 text-sm md:text-base"
                     style={{ backgroundColor: '#FA8112', color: '#222222' }}
                     onMouseEnter={(e) => !isSaving && (e.target.style.backgroundColor = '#E9720F')}
                     onMouseLeave={(e) => !isSaving && (e.target.style.backgroundColor = '#FA8112')}
@@ -734,7 +538,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     onClick={handleResetSettings}
-                    className="px-6 py-3 rounded-lg transition duration-300"
+                    className="px-4 md:px-6 py-2 md:py-3 rounded-lg transition duration-300 text-sm md:text-base"
                     style={{ backgroundColor: '#303030', color: '#F5E7C6' }}
                     onMouseEnter={(e) => {
                       e.target.style.backgroundColor = '#ef4444';

@@ -140,19 +140,27 @@ export default function ProblemsPage() {
   return isSignedIn ? (
     <div className="flex min-h-screen" style={{ backgroundColor: '#222222' }}>
       <Sidebar />
-      <div className="flex-grow">
+      <div className="flex-grow w-full md:w-auto overflow-x-hidden">
         <Header />
-        <div className="container mx-auto px-6 py-8">
-          <h1 className="text-3xl font-bold mb-6" style={{ color: '#FAF3E1' }}>
-            Problem Set
-          </h1>
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
+          {/* Header Section */}
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold" style={{ color: '#FAF3E1' }}>
+              Problem Set 📚
+            </h1>
+            <p className="mt-2 text-sm md:text-base" style={{ color: '#F5E7C6' }}>
+              {filteredProblems.length} problem{filteredProblems.length !== 1 ? 's' : ''} available
+            </p>
+          </div>
 
+          {/* Filter Bar */}
           <FilterBar
             onFilterChange={handleFilterChange}
             onSearch={handleSearch}
             onSort={handleSort}
           />
 
+          {/* Bulk Actions Bar */}
           <BulkActionsBar
             selectedCount={selectedProblems.length}
             onAddToQuizSet={handleBulkAddToQuizSet}
@@ -161,8 +169,9 @@ export default function ProblemsPage() {
             onClear={() => setSelectedProblems([])}
           />
 
+          {/* Problems List */}
           {filteredProblems.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {filteredProblems.map((problem) => (
                 <ProblemCard
                   key={problem.id}
@@ -178,20 +187,38 @@ export default function ProblemsPage() {
             </div>
           ) : (
             <div 
-              className="text-center py-12 rounded-lg border"
+              className="text-center py-12 md:py-16 rounded-lg border"
               style={{ 
                 backgroundColor: '#2A2A2A',
                 borderColor: 'rgba(255,255,255,0.08)',
                 color: 'rgba(245,231,198,0.6)'
               }}
             >
-              <p className="text-xl">No problems found matching your filters.</p>
-              <p className="mt-2">Try adjusting your search criteria.</p>
+              <div className="text-4xl md:text-6xl mb-4">🔍</div>
+              <p className="text-lg md:text-xl font-semibold" style={{ color: '#FAF3E1' }}>
+                No problems found
+              </p>
+              <p className="mt-2 text-sm md:text-base px-4">
+                Try adjusting your search criteria or filters.
+              </p>
+              <button
+                onClick={() => {
+                  setFilteredProblems(problems);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-6 px-6 py-2 rounded-lg transition duration-300"
+                style={{ backgroundColor: '#FA8112', color: '#222222' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#E9720F'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#FA8112'}
+              >
+                Clear Filters
+              </button>
             </div>
           )}
         </div>
       </div>
 
+      {/* Problem Details Modal */}
       {selectedProblem && (
         <ProblemDetailsModal
           problem={selectedProblem}

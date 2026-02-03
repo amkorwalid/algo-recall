@@ -1,34 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Modal from "../shared/Modal";
 
-export default function QuizCard({ problem, onNext, questionNumber, totalQuestions, timerEnabled, timeLimit }) {
+export default function QuizCard({ problem, onNext }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [isResponseChecked, setIsResponseChecked] = useState(false);
   const [showInsight, setShowInsight] = useState(false);
   const [modalContent, setModalContent] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(timeLimit || 30);
-  const [skipped, setSkipped] = useState(false);
 
   const difficultyColors = {
     easy: '#22c55e',
     medium: '#eab308',
     hard: '#ef4444',
   };
-
-  useEffect(() => {
-    if (timerEnabled && timeRemaining > 0 && !isResponseChecked) {
-      const timer = setInterval(() => {
-        setTimeRemaining((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [timerEnabled, timeRemaining, isResponseChecked]);
-
-  useEffect(() => {
-    if (timeRemaining === 0 && !isResponseChecked) {
-      handleCheck();
-    }
-  }, [timeRemaining]);
 
   const handleCheck = () => {
     if (!selectedOption) {
@@ -47,81 +30,67 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
     setIsResponseChecked(true);
   };
 
-  const handleSkip = () => {
-    setSkipped(true);
-    onNext({ skipped: true, problem });
-  };
-
   const handleNext = () => {
-    const result = {
-      problem,
-      selectedOption,
-      isCorrect: selectedOption?.is_correct || selectedOption === problem?.quiz?.correct_option,
-      timeSpent: (timeLimit || 30) - timeRemaining,
-    };
-
-    // Reset states
     setSelectedOption(null);
     setIsResponseChecked(false);
     setShowInsight(false);
     setModalContent(null);
-    setTimeRemaining(timeLimit || 30);
-    setSkipped(false);
-
-    onNext(result);
+    onNext();
   };
 
   return (
     <div 
-      className="p-6 rounded-lg shadow-lg border"
+      className="p-4 md:p-6 rounded-lg shadow-lg border"
       style={{ backgroundColor: '#2A2A2A', borderColor: 'rgba(255,255,255,0.08)' }}
     >
-      {/* Progress and Timer */}
-      <div className="flex justify-between items-center mb-4">
-        <div style={{ color: '#F5E7C6' }}>
-          Question <span className="font-bold" style={{ color: '#FA8112' }}>{questionNumber}</span> of{" "}
-          <span className="font-bold">{totalQuestions}</span>
-        </div>
-        {timerEnabled && (
-          <div 
-            className="text-lg font-bold"
-            style={{ color: timeRemaining <= 5 ? '#ef4444' : '#FA8112' }}
+      {/* Problem Header */}
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-3" style={{ color: '#FAF3E1' }}>
+          {problem.title}
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <span 
+            className="px-3 py-1 rounded text-xs md:text-sm font-medium text-white"
+            style={{ backgroundColor: difficultyColors[problem.difficulty] }}
           >
-            ⏱️ {timeRemaining}s
-          </div>
-        )}
+            {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
+          </span>
+          {problem.topics.slice(0, 3).map((topic, idx) => (
+            <span 
+              key={idx} 
+              className="px-2 py-1 rounded text-xs"
+              style={{ backgroundColor: '#303030', color: '#F5E7C6' }}
+            >
+              {topic.replace('_', ' ')}
+            </span>
+          ))}
+          {problem.topics.length > 3 && (
+            <span 
+              className="px-2 py-1 rounded text-xs"
+              style={{ backgroundColor: '#303030', color: 'rgba(245,231,198,0.6)' }}
+            >
+              +{problem.topics.length - 3}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full rounded-full h-2 mb-6" style={{ backgroundColor: '#303030' }}>
-        <div
-          className="h-2 rounded-full transition-all duration-300"
-          style={{ 
-            width: `${(questionNumber / totalQuestions) * 100}%`,
-            backgroundColor: '#FA8112'
-          }}
-        ></div>
+      {/* Problem Summary */}
+      <div 
+        className="p-3 md:p-4 rounded-lg mb-4 md:mb-6"
+        style={{ backgroundColor: '#303030' }}
+      >
+        <p className="text-sm md:text-base" style={{ color: '#F5E7C6' }}>
+          <strong style={{ color: '#FA8112' }}>Summary:</strong> {problem.problem_summary}
+        </p>
       </div>
-
-      {/* Problem Title */}
-      <h2 className="text-xl font-bold mb-2" style={{ color: '#FAF3E1' }}>{problem.title}</h2>
-      <p className="mb-1" style={{ color: '#F5E7C6' }}>
-        <strong>Difficulty:</strong>{" "}
-        <span
-          className="text-sm px-2 py-1 rounded font-medium text-white"
-          style={{ backgroundColor: difficultyColors[problem.difficulty] }}
-        >
-          {problem.difficulty}
-        </span>
-      </p>
-      <p className="mb-4" style={{ color: 'rgba(245,231,198,0.6)' }}>
-        <strong>Summary:</strong> {problem.problem_summary}
-      </p>
 
       {/* Quiz Question */}
-      <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: '#303030' }}>
-        <h3 className="text-lg font-bold mb-4" style={{ color: '#FA8112' }}>{problem.quiz.question}</h3>
-        <div className="space-y-3">
+      <div className="mb-4 md:mb-6">
+        <h3 className="text-lg md:text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
+          {problem.quiz.question}
+        </h3>
+        <div className="space-y-2 md:space-y-3">
           {Array.isArray(problem.quiz.options) &&
             problem.quiz.options.map((option, index) => {
               let optionStyle = { 
@@ -137,14 +106,14 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
                     backgroundColor: 'rgba(34,197,94,0.2)', 
                     borderColor: '#22c55e',
                     color: '#22c55e',
-                    border: '1px solid'
+                    border: '2px solid'
                   };
                 } else if (selectedOption === option) {
                   optionStyle = { 
                     backgroundColor: 'rgba(239,68,68,0.2)', 
                     borderColor: '#ef4444',
                     color: '#ef4444',
-                    border: '1px solid'
+                    border: '2px solid'
                   };
                 }
               } else if (selectedOption === option) {
@@ -161,7 +130,7 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
                   key={option?.id || index}
                   onClick={() => !isResponseChecked && setSelectedOption(option)}
                   disabled={isResponseChecked}
-                  className="block w-full px-4 py-3 rounded text-left transition duration-300"
+                  className="block w-full px-3 md:px-4 py-3 md:py-4 rounded text-left transition duration-300 text-sm md:text-base"
                   style={optionStyle}
                   onMouseEnter={(e) => {
                     if (!isResponseChecked && selectedOption !== option) {
@@ -182,12 +151,12 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center space-x-4 mt-6">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
         {!isResponseChecked ? (
           <>
             <button
               onClick={handleCheck}
-              className="px-6 py-2 rounded-lg font-medium transition duration-300"
+              className="flex-1 px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition duration-300 text-sm md:text-base"
               style={{ backgroundColor: '#FA8112', color: '#222222' }}
               onMouseEnter={(e) => e.target.style.backgroundColor = '#E9720F'}
               onMouseLeave={(e) => e.target.style.backgroundColor = '#FA8112'}
@@ -196,7 +165,7 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
             </button>
             <button
               onClick={() => setShowInsight((prev) => !prev)}
-              className="px-6 py-2 rounded-lg transition duration-300"
+              className="flex-1 sm:flex-none px-4 md:px-6 py-2 md:py-3 rounded-lg transition duration-300 text-sm md:text-base"
               style={{ backgroundColor: '#303030', color: '#F5E7C6' }}
               onMouseEnter={(e) => {
                 e.target.style.backgroundColor = '#FA8112';
@@ -209,26 +178,11 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
             >
               {showInsight ? "Hide Hint" : "💡 Show Hint"}
             </button>
-            <button
-              onClick={handleSkip}
-              className="px-6 py-2 rounded-lg transition duration-300"
-              style={{ backgroundColor: '#303030', color: 'rgba(245,231,198,0.6)' }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#eab308';
-                e.target.style.color = '#ffffff';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#303030';
-                e.target.style.color = 'rgba(245,231,198,0.6)';
-              }}
-            >
-              Skip
-            </button>
           </>
         ) : (
           <button
             onClick={handleNext}
-            className="px-6 py-2 rounded-lg font-medium transition duration-300"
+            className="w-full px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium transition duration-300 text-sm md:text-base"
             style={{ backgroundColor: '#FA8112', color: '#222222' }}
             onMouseEnter={(e) => e.target.style.backgroundColor = '#E9720F'}
             onMouseLeave={(e) => e.target.style.backgroundColor = '#FA8112'}
@@ -241,13 +195,13 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
       {/* Key Insight */}
       {showInsight && (
         <div 
-          className="mt-4 p-4 border rounded-lg"
+          className="p-3 md:p-4 border rounded-lg mb-4"
           style={{ 
             backgroundColor: 'rgba(250,129,18,0.15)',
             borderColor: 'rgba(250,129,18,0.35)'
           }}
         >
-          <p style={{ color: '#F5E7C6' }}>
+          <p className="text-sm md:text-base" style={{ color: '#F5E7C6' }}>
             <strong style={{ color: '#FA8112' }}>💡 Hint:</strong> {problem.key_insight}
           </p>
         </div>
@@ -255,25 +209,33 @@ export default function QuizCard({ problem, onNext, questionNumber, totalQuestio
 
       {/* Detailed Explanation (after checking) */}
       {isResponseChecked && (
-        <div className="mt-6 space-y-4">
-          <div className="p-4 rounded-lg" style={{ backgroundColor: '#303030' }}>
-            <h4 className="font-semibold mb-2" style={{ color: '#FA8112' }}>📌 Canonical Idea</h4>
-            <p style={{ color: '#F5E7C6' }}>{problem.canonical_idea.one_liner}</p>
+        <div className="space-y-4">
+          <div className="p-3 md:p-4 rounded-lg" style={{ backgroundColor: '#303030' }}>
+            <h4 className="font-semibold mb-2 text-sm md:text-base" style={{ color: '#FA8112' }}>
+              📌 Canonical Idea
+            </h4>
+            <p className="text-sm md:text-base" style={{ color: '#F5E7C6' }}>
+              {problem.canonical_idea.one_liner}
+            </p>
           </div>
 
-          <div className="p-4 rounded-lg" style={{ backgroundColor: '#303030' }}>
-            <h4 className="font-semibold mb-2" style={{ color: '#FA8112' }}>💻 Pseudocode</h4>
+          <div className="p-3 md:p-4 rounded-lg" style={{ backgroundColor: '#303030' }}>
+            <h4 className="font-semibold mb-2 text-sm md:text-base" style={{ color: '#FA8112' }}>
+              💻 Pseudocode
+            </h4>
             <pre 
-              className="p-4 rounded text-sm overflow-x-auto"
+              className="p-3 md:p-4 rounded text-xs md:text-sm overflow-x-auto"
               style={{ backgroundColor: '#222222', color: '#F5E7C6' }}
             >
               {problem.pseudo_code.join("\n")}
             </pre>
           </div>
 
-          <div className="p-4 rounded-lg" style={{ backgroundColor: '#303030' }}>
-            <h4 className="font-semibold mb-2" style={{ color: '#FA8112' }}>⚠️ Common Traps</h4>
-            <ul className="list-disc list-inside space-y-1" style={{ color: '#F5E7C6' }}>
+          <div className="p-3 md:p-4 rounded-lg" style={{ backgroundColor: '#303030' }}>
+            <h4 className="font-semibold mb-2 text-sm md:text-base" style={{ color: '#FA8112' }}>
+              ⚠️ Common Traps
+            </h4>
+            <ul className="list-disc list-inside space-y-1 text-sm md:text-base" style={{ color: '#F5E7C6' }}>
               {problem.common_traps.map((trap, index) => (
                 <li key={index}>{trap}</li>
               ))}

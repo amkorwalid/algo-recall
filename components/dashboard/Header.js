@@ -1,4 +1,5 @@
 import { UserButton, useUser } from "@clerk/nextjs";
+import Link from "next/link";
 
 export default function Header() {
   const { user } = useUser();
@@ -42,15 +43,16 @@ export default function Header() {
           </button>
 
           {/* Settings */}
-          <button 
-            className="p-2 rounded-lg transition duration-300"
-            style={{ backgroundColor: '#303030' }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FA8112'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#303030'}
-          >
-            <span className="text-xl">⚙️</span>
-          </button>
-
+          <Link href="/dashboard/settings">
+            <button 
+              className="p-2 rounded-lg transition duration-300"
+              style={{ backgroundColor: '#303030' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FA8112'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#303030'}
+            >
+              <span className="text-xl">⚙️</span>
+            </button>
+          </Link>
           {/* User Profile Button (Clerk) */}
           <div className="flex items-center">
             <UserButton 

@@ -27,7 +27,6 @@ export default function ProgressPage() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    // Load progress data
     fetch("/data.json")
       .then((res) => res.json())
       .then((data) => {
@@ -38,7 +37,6 @@ export default function ProgressPage() {
         const inProgress = Object.values(problemStatus).filter((s) => s === "in_progress").length;
         const notAttempted = problems.length - completed - inProgress;
 
-        // Count by difficulty
         const byDifficulty = { easy: 0, medium: 0, hard: 0 };
         const completedByDifficulty = { easy: 0, medium: 0, hard: 0 };
         
@@ -49,7 +47,6 @@ export default function ProgressPage() {
           }
         });
 
-        // Count by topic
         const byTopic = {};
         problems.forEach((p) => {
           p.topics.forEach((topic) => {
@@ -73,7 +70,6 @@ export default function ProgressPage() {
           byTopic,
         });
 
-        // Mock recent activity (you can enhance this with real timestamp data)
         const recentProblems = Object.entries(problemStatus)
           .slice(-5)
           .reverse()
@@ -105,41 +101,41 @@ export default function ProgressPage() {
   return isSignedIn ? (
     <div className="flex min-h-screen" style={{ backgroundColor: '#222222' }}>
       <Sidebar />
-      <div className="flex-grow">
+      <div className="flex-grow w-full md:w-auto overflow-x-hidden">
         <Header />
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold" style={{ color: '#FAF3E1' }}>
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold" style={{ color: '#FAF3E1' }}>
               Your Progress 📊
             </h1>
-            <p className="mt-2" style={{ color: '#F5E7C6' }}>
+            <p className="mt-2 text-sm md:text-base" style={{ color: '#F5E7C6' }}>
               Track your learning journey and identify areas for improvement
             </p>
           </div>
 
           {/* Overall Progress */}
           <div 
-            className="p-6 rounded-lg border mb-8"
+            className="p-4 md:p-6 rounded-lg border mb-6 md:mb-8"
             style={{ 
               backgroundColor: '#2A2A2A',
               borderColor: 'rgba(255,255,255,0.08)'
             }}
           >
-            <h2 className="text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
+            <h2 className="text-lg md:text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
               Overall Progress
             </h2>
-            <div className="flex items-center justify-between mb-4">
-              <span style={{ color: '#F5E7C6' }}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+              <span className="text-sm md:text-base" style={{ color: '#F5E7C6' }}>
                 {stats.completed} / {stats.total} problems completed
               </span>
-              <span className="text-2xl font-bold" style={{ color: '#FA8112' }}>
+              <span className="text-xl md:text-2xl font-bold" style={{ color: '#FA8112' }}>
                 {getProgressPercentage()}%
               </span>
             </div>
-            <div className="w-full rounded-full h-4" style={{ backgroundColor: '#303030' }}>
+            <div className="w-full rounded-full h-3 md:h-4" style={{ backgroundColor: '#303030' }}>
               <div
-                className="h-4 rounded-full transition-all duration-500"
+                className="h-3 md:h-4 rounded-full transition-all duration-500"
                 style={{ 
                   width: `${getProgressPercentage()}%`,
                   backgroundColor: '#FA8112'
@@ -149,9 +145,9 @@ export default function ProgressPage() {
           </div>
 
           {/* Status Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
             <div 
-              className="p-6 rounded-lg border"
+              className="p-4 md:p-6 rounded-lg border"
               style={{ 
                 backgroundColor: '#2A2A2A',
                 borderColor: 'rgba(255,255,255,0.08)'
@@ -159,15 +155,15 @@ export default function ProgressPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>Completed</p>
-                  <p className="text-3xl font-bold" style={{ color: '#22c55e' }}>{stats.completed}</p>
+                  <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>Completed</p>
+                  <p className="text-2xl md:text-3xl font-bold" style={{ color: '#22c55e' }}>{stats.completed}</p>
                 </div>
-                <div className="text-4xl">✅</div>
+                <div className="text-3xl md:text-4xl">✅</div>
               </div>
             </div>
 
             <div 
-              className="p-6 rounded-lg border"
+              className="p-4 md:p-6 rounded-lg border"
               style={{ 
                 backgroundColor: '#2A2A2A',
                 borderColor: 'rgba(255,255,255,0.08)'
@@ -175,15 +171,15 @@ export default function ProgressPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>In Progress</p>
-                  <p className="text-3xl font-bold" style={{ color: '#eab308' }}>{stats.inProgress}</p>
+                  <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>In Progress</p>
+                  <p className="text-2xl md:text-3xl font-bold" style={{ color: '#eab308' }}>{stats.inProgress}</p>
                 </div>
-                <div className="text-4xl">⚠️</div>
+                <div className="text-3xl md:text-4xl">⚠️</div>
               </div>
             </div>
 
             <div 
-              className="p-6 rounded-lg border"
+              className="p-4 md:p-6 rounded-lg border sm:col-span-3 md:col-span-1"
               style={{ 
                 backgroundColor: '#2A2A2A',
                 borderColor: 'rgba(255,255,255,0.08)'
@@ -191,23 +187,23 @@ export default function ProgressPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>Not Attempted</p>
-                  <p className="text-3xl font-bold" style={{ color: 'rgba(245,231,198,0.6)' }}>{stats.notAttempted}</p>
+                  <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>Not Attempted</p>
+                  <p className="text-2xl md:text-3xl font-bold" style={{ color: 'rgba(245,231,198,0.6)' }}>{stats.notAttempted}</p>
                 </div>
-                <div className="text-4xl">❌</div>
+                <div className="text-3xl md:text-4xl">❌</div>
               </div>
             </div>
           </div>
 
           {/* Progress by Difficulty */}
           <div 
-            className="p-6 rounded-lg border mb-8"
+            className="p-4 md:p-6 rounded-lg border mb-6 md:mb-8"
             style={{ 
               backgroundColor: '#2A2A2A',
               borderColor: 'rgba(255,255,255,0.08)'
             }}
           >
-            <h2 className="text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
+            <h2 className="text-lg md:text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
               Progress by Difficulty
             </h2>
             <div className="space-y-4">
@@ -225,18 +221,18 @@ export default function ProgressPage() {
                   <div key={difficulty}>
                     <div className="flex items-center justify-between mb-2">
                       <span 
-                        className="text-sm font-medium capitalize"
+                        className="text-sm md:text-base font-medium capitalize"
                         style={{ color: '#F5E7C6' }}
                       >
                         {difficulty}
                       </span>
-                      <span style={{ color: 'rgba(245,231,198,0.6)' }}>
+                      <span className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
                         {completed} / {total} ({percentage}%)
                       </span>
                     </div>
-                    <div className="w-full rounded-full h-3" style={{ backgroundColor: '#303030' }}>
+                    <div className="w-full rounded-full h-2 md:h-3" style={{ backgroundColor: '#303030' }}>
                       <div
-                        className="h-3 rounded-full transition-all duration-500"
+                        className="h-2 md:h-3 rounded-full transition-all duration-500"
                         style={{ 
                           width: `${percentage}%`,
                           backgroundColor: colors[difficulty]
@@ -251,33 +247,33 @@ export default function ProgressPage() {
 
           {/* Progress by Topic */}
           <div 
-            className="p-6 rounded-lg border mb-8"
+            className="p-4 md:p-6 rounded-lg border mb-6 md:mb-8"
             style={{ 
               backgroundColor: '#2A2A2A',
               borderColor: 'rgba(255,255,255,0.08)'
             }}
           >
-            <h2 className="text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
+            <h2 className="text-lg md:text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
               Progress by Topic
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {Object.entries(stats.byTopic).map(([topic, data]) => {
                 const percentage = data.total > 0 ? ((data.completed / data.total) * 100).toFixed(1) : 0;
 
                 return (
                   <div 
                     key={topic}
-                    className="p-4 rounded-lg border"
+                    className="p-3 md:p-4 rounded-lg border"
                     style={{ 
                       backgroundColor: '#303030',
                       borderColor: 'rgba(255,255,255,0.08)'
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium" style={{ color: '#F5E7C6' }}>
+                      <span className="font-medium text-sm md:text-base" style={{ color: '#F5E7C6' }}>
                         {topic.replace('_', ' ')}
                       </span>
-                      <span className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                      <span className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
                         {data.completed}/{data.total}
                       </span>
                     </div>
@@ -298,13 +294,13 @@ export default function ProgressPage() {
 
           {/* Recent Activity */}
           <div 
-            className="p-6 rounded-lg border"
+            className="p-4 md:p-6 rounded-lg border"
             style={{ 
               backgroundColor: '#2A2A2A',
               borderColor: 'rgba(255,255,255,0.08)'
             }}
           >
-            <h2 className="text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
+            <h2 className="text-lg md:text-xl font-bold mb-4" style={{ color: '#FA8112' }}>
               Recent Activity
             </h2>
             {recentActivity.length > 0 ? (
@@ -312,7 +308,7 @@ export default function ProgressPage() {
                 {recentActivity.map((item, index) => (
                   <div
                     key={index}
-                    className="p-4 rounded-lg border transition duration-300"
+                    className="p-3 md:p-4 rounded-lg border transition duration-300"
                     style={{ 
                       backgroundColor: '#303030',
                       borderColor: 'rgba(255,255,255,0.08)'
@@ -320,23 +316,23 @@ export default function ProgressPage() {
                     onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(250,129,18,0.35)'}
                     onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center space-x-3 flex-1">
+                        <span className="text-xl md:text-2xl flex-shrink-0">
                           {item.status === "completed" ? "✅" : "⚠️"}
                         </span>
-                        <div>
-                          <p className="font-medium" style={{ color: '#FAF3E1' }}>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm md:text-base truncate" style={{ color: '#FAF3E1' }}>
                             {item.problem.title}
                           </p>
-                          <p className="text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
+                          <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>
                             {item.status === "completed" ? "Completed" : "In Progress"}
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => router.push(`/dashboard/quiz?problemId=${item.problem.id}`)}
-                        className="px-4 py-2 rounded-lg text-sm transition duration-300"
+                        className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs md:text-sm transition duration-300 whitespace-nowrap"
                         style={{ backgroundColor: '#FA8112', color: '#222222' }}
                         onMouseEnter={(e) => e.target.style.backgroundColor = '#E9720F'}
                         onMouseLeave={(e) => e.target.style.backgroundColor = '#FA8112'}
@@ -348,7 +344,7 @@ export default function ProgressPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-center py-8" style={{ color: 'rgba(245,231,198,0.6)' }}>
+              <p className="text-center py-8 text-sm md:text-base" style={{ color: 'rgba(245,231,198,0.6)' }}>
                 No activity yet. Start solving problems to track your progress!
               </p>
             )}
