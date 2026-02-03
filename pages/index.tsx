@@ -11,6 +11,7 @@ import WhoItsFor from '../components/home/WhoItsFor';
 import WhyAlgoRecall from '../components/home/WhyAlgoRecall';
 import FinalCTA from '../components/home/FinalCTA';
 
+// Home Page
 export default function Home() {
   return (
     <div>
