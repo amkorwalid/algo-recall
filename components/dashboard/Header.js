@@ -6,10 +6,15 @@ export default function Header() {
 
   return (
     <header 
-      className="shadow-md border-b"
+      className="shadow-md border-b w-full"
       style={{ 
         backgroundColor: '#2A2A2A',
-        borderColor: 'rgba(255,255,255,0.08)'
+        borderColor: 'rgba(255,255,255,0.08)',
+        position: 'sticky',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
       }}
     >
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -28,7 +33,7 @@ export default function Header() {
         {/* User Actions */}
         <div className="flex items-center space-x-4">
           {/* Notifications (optional placeholder) */}
-          <button 
+          {/* <button 
             className="relative p-2 rounded-lg transition duration-300"
             style={{ backgroundColor: '#303030' }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FA8112'}
@@ -36,14 +41,14 @@ export default function Header() {
           >
             <span className="text-xl">🔔</span>
             {/* Notification badge */}
-            <span 
+            {/* <span 
               className="absolute top-0 right-0 w-3 h-3 rounded-full"
               style={{ backgroundColor: '#FA8112' }}
             ></span>
-          </button>
+          </button> */} 
 
           {/* Settings */}
-          <Link href="/dashboard/settings">
+          {/* <Link href="/dashboard/settings">
             <button 
               className="p-2 rounded-lg transition duration-300"
               style={{ backgroundColor: '#303030' }}
@@ -52,13 +57,13 @@ export default function Header() {
             >
               <span className="text-xl">⚙️</span>
             </button>
-          </Link>
+          </Link> */}
           {/* User Profile Button (Clerk) */}
           <div className="flex items-center">
             <UserButton 
               appearance={{
                 elements: {
-                  avatarBox: "w-10 h-10 rounded-full border-2",
+                  avatarBox: "w-16 h-16 rounded-full border-2",
                   userButtonPopoverCard: {
                     backgroundColor: '#303030',
                     color: '#FAF3E1',

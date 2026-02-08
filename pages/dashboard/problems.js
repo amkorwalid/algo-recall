@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@clerk/nextjs";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
 import FilterBar from "../../components/dashboard/FilterBar";
@@ -26,19 +27,14 @@ export default function ProblemsPage() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    // Load problems from JSON
-    fetch("/data.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setProblems(data.problems);
-        setFilteredProblems(data.problems);
-        
-        // Load user data from localStorage
-        const savedStatus = JSON.parse(localStorage.getItem("problemStatus") || "{}");
-        const savedFavorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-        setProblemStatus(savedStatus);
-        setFavorites(savedFavorites);
-      });
+    const run = async () => {
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase.from("genai_problems").select("*");
+      if (error) console.error(error);
+      setProblems(data ?? []);
+      setFilteredProblems(data ?? []);
+    };
+    run();
   }, []);
 
   const handleFilterChange = ({ difficulty, topics }) => {
@@ -140,7 +136,7 @@ export default function ProblemsPage() {
   return isSignedIn ? (
     <div className="flex min-h-screen" style={{ backgroundColor: '#222222' }}>
       <Sidebar />
-      <div className="flex-grow w-full md:w-auto overflow-x-hidden">
+      <div className="grow w-full md:w-auto relative">
         <Header />
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
           {/* Header Section */}

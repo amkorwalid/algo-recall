@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@clerk/nextjs";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
 import QuizCard from "../../components/dashboard/QuizCard";
@@ -19,13 +20,9 @@ export default function QuizPage() {
   }, [isLoaded, isSignedIn, router]);
 
   const loadRandomQuiz = (data) => {
-    const problems = Array.isArray(data?.problems) ? data.problems : [];
-    const solvedQuizzes = Array.isArray(data?.solvedQuizzes)
-      ? data.solvedQuizzes
-      : [];
-    const unsolvedQuizzes = problems.filter(
-      (problem) => !solvedQuizzes.includes(problem.id)
-    );
+    const problems = Array.isArray(data) ? data : [];
+    const solvedQuizzes = [];
+    const unsolvedQuizzes = data;
 
     setQuizStats({
       total: problems.length,
@@ -41,13 +38,16 @@ export default function QuizPage() {
     }
   };
 
+
   useEffect(() => {
-    fetch("/data.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setData(data);
-        loadRandomQuiz(data);
-      });
+    const run = async () => {
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase.from("genai_problems").select("*");
+      if (error) console.error(error);
+      setData(data ?? []);
+      loadRandomQuiz(data ?? []);
+    };
+    run();
   }, []);
 
   const handleNextQuiz = () => {

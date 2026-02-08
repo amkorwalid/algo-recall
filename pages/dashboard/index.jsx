@@ -62,7 +62,7 @@ export default function DashboardHome() {
       <Sidebar />
 
       {/* Main Content - Add padding on mobile for menu button */}
-      <div className="grow w-full md:w-auto">
+      <div className="grow w-full md:w-auto relative">
         <Header />
         <div className="container px-4 md:px-6 py-8 mx-auto pt-20 md:pt-8">
           {/* Welcome Section */}
