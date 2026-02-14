@@ -1,17 +1,27 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
-import QuizCard from "../../components/dashboard/QuizCard";
 
 export default function QuizPage() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
-  const [problem, setProblem] = useState(null);
-  const [data, setData] = useState({ problems: [], solvedQuizzes: [] });
-  const [quizStats, setQuizStats] = useState({ total: 0, completed: 0 });
+  const { user } = useUser();
+
+  // Quiz configuration state
+  const [problemSource, setProblemSource] = useState("all"); // "all", "favorites", "custom"
+  const [selectedQuizSet, setSelectedQuizSet] = useState(null);
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerDuration, setTimerDuration] = useState(30); // minutes
+  const [questionCount, setQuestionCount] = useState(10);
+
+  // Data state
+  const [allProblems, setAllProblems] = useState([]);
+  const [quizSets, setQuizSets] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -19,154 +29,474 @@ export default function QuizPage() {
     }
   }, [isLoaded, isSignedIn, router]);
 
-  const loadRandomQuiz = (data) => {
-    const problems = Array.isArray(data) ? data : [];
-    const solvedQuizzes = [];
-    const unsolvedQuizzes = data;
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const supabase = supabaseBrowser();
 
-    setQuizStats({
-      total: problems.length,
-      completed: solvedQuizzes.length,
-    });
+      // Load all problems
+      const { data: problems, error: problemsError } = await supabase
+        .from("generated_questions")
+        .select("*");
+      if (problemsError) console.error(problemsError);
+      setAllProblems(problems ?? []);
 
-    if (unsolvedQuizzes.length > 0) {
-      const randomProblem =
-        unsolvedQuizzes[Math.floor(Math.random() * unsolvedQuizzes.length)];
-      setProblem(randomProblem);
-    } else {
-      setProblem(null);
+      // Load user's quiz sets
+      if (user) {
+        const { data: sets, error: setsError } = await supabase
+          .from("quizzes_set")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        if (setsError) console.error(setsError);
+        setQuizSets(sets ?? []);
+      }
+
+      // Load favorites from localStorage
+      const savedFavorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+      setFavorites(savedFavorites);
+
+      setLoading(false);
+    };
+
+    if (isLoaded && isSignedIn) {
+      loadData();
     }
+  }, [isLoaded, isSignedIn, user]);
+
+  const getAvailableProblemsCount = () => {
+    if (problemSource === "all") return allProblems.length;
+    if (problemSource === "favorites") return favorites.length;
+    if (problemSource === "custom" && selectedQuizSet) {
+      return selectedQuizSet.set?.length || 0;
+    }
+    return 0;
   };
 
+  const handleStartQuiz = () => {
+    let problemIds = [];
 
-  useEffect(() => {
-    const run = async () => {
-      const supabase = supabaseBrowser();
-      const { data, error } = await supabase.from("generated_questions").select("*");
-      if (error) console.error(error);
-      setData(data ?? []);
-      loadRandomQuiz(data ?? []);
+    if (problemSource === "all") {
+      // Shuffle and pick questionCount problems
+      const shuffled = [...allProblems].sort(() => Math.random() - 0.5);
+      problemIds = shuffled.slice(0, questionCount).map((p) => p.id);
+    } else if (problemSource === "favorites") {
+      const shuffled = [...favorites].sort(() => Math.random() - 0.5);
+      problemIds = shuffled.slice(0, questionCount);
+    } else if (problemSource === "custom" && selectedQuizSet) {
+      const shuffled = [...(selectedQuizSet.set || [])].sort(() => Math.random() - 0.5);
+      problemIds = shuffled.slice(0, questionCount);
+    }
+
+    if (problemIds.length === 0) {
+      alert("No problems available for this quiz configuration!");
+      return;
+    }
+
+    // Store quiz configuration in localStorage
+    const quizConfig = {
+      problemIds,
+      timerEnabled,
+      timerDuration: timerEnabled ? timerDuration : null,
+      sourceName:
+        problemSource === "all"
+          ? "All Problems"
+          : problemSource === "favorites"
+          ? "Favorites"
+          : selectedQuizSet?.name || "Custom Set",
     };
-    run();
-  }, []);
+    localStorage.setItem("quizSessionConfig", JSON.stringify(quizConfig));
 
-  const handleNextQuiz = () => {
-    loadRandomQuiz(data);
+    // Navigate to quiz session
+    router.push("/dashboard/quiz/session");
   };
 
   if (!isLoaded) {
     return (
-      <div 
+      <div
         className="flex items-center justify-center min-h-screen"
-        style={{ backgroundColor: '#222222' }}
+        style={{ backgroundColor: "#222222" }}
       >
-        <div style={{ color: '#FAF3E1' }}>Loading...</div>
+        <div style={{ color: "#FAF3E1" }}>Loading...</div>
       </div>
     );
   }
 
   return isSignedIn ? (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#222222' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: "#222222" }}>
       <Sidebar />
       <div className="grow w-full md:w-auto relative">
         <Header />
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
           {/* Header Section */}
-          <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold" style={{ color: '#FAF3E1' }}>
-              Quiz Time 🧠
+          <div className="mb-8">
+            <h1
+              className="text-2xl md:text-3xl lg:text-4xl font-bold"
+              style={{ color: "#FAF3E1" }}
+            >
+              Quiz Configuration 🧠
             </h1>
-            <p className="mt-2 text-sm md:text-base" style={{ color: '#F5E7C6' }}>
-              Test your knowledge and master algorithmic patterns
+            <p className="mt-2 text-sm md:text-base" style={{ color: "#F5E7C6" }}>
+              Configure your quiz session and test your knowledge
             </p>
           </div>
 
-          {/* Progress Stats */}
-          {quizStats.total > 0 && (
-            <div 
-              className="p-4 md:p-6 rounded-lg border mb-6"
-              style={{ 
-                backgroundColor: '#2A2A2A',
-                borderColor: 'rgba(255,255,255,0.08)'
+          {loading ? (
+            <div
+              className="p-8 rounded-lg border text-center"
+              style={{
+                backgroundColor: "#2A2A2A",
+                borderColor: "rgba(255,255,255,0.08)",
               }}
             >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm md:text-base" style={{ color: '#F5E7C6' }}>
-                    Your Progress
-                  </p>
-                  <p className="text-xl md:text-2xl font-bold" style={{ color: '#FA8112' }}>
-                    {quizStats.completed} / {quizStats.total} completed
-                  </p>
-                </div>
-                <div className="w-full sm:w-auto">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 sm:w-48 h-3 rounded-full" style={{ backgroundColor: '#303030' }}>
-                      <div
-                        className="h-3 rounded-full transition-all duration-500"
-                        style={{ 
-                          width: `${(quizStats.completed / quizStats.total) * 100}%`,
-                          backgroundColor: '#FA8112'
-                        }}
-                      ></div>
+              <p style={{ color: "#F5E7C6" }}>Loading quiz options...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Problem Source Selection */}
+              <div
+                className="p-6 rounded-lg border"
+                style={{
+                  backgroundColor: "#2A2A2A",
+                  borderColor: "rgba(255,255,255,0.08)",
+                }}
+              >
+                <h2
+                  className="text-xl font-bold mb-4"
+                  style={{ color: "#FA8112" }}
+                >
+                  📚 Problem Set
+                </h2>
+                <p
+                  className="text-sm mb-4"
+                  style={{ color: "rgba(245,231,198,0.6)" }}
+                >
+                  Choose which problems to include in your quiz
+                </p>
+
+                <div className="space-y-3">
+                  {/* All Problems */}
+                  <button
+                    onClick={() => {
+                      setProblemSource("all");
+                      setSelectedQuizSet(null);
+                    }}
+                    className="w-full p-4 rounded-lg text-left transition duration-300"
+                    style={{
+                      backgroundColor:
+                        problemSource === "all"
+                          ? "rgba(250,129,18,0.15)"
+                          : "#303030",
+                      borderColor:
+                        problemSource === "all"
+                          ? "rgba(250,129,18,0.35)"
+                          : "transparent",
+                      border: problemSource === "all" ? "2px solid" : "none",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className="font-medium"
+                          style={{ color: "#FAF3E1" }}
+                        >
+                          🌐 All Problems
+                        </p>
+                        <p
+                          className="text-sm"
+                          style={{ color: "rgba(245,231,198,0.6)" }}
+                        >
+                          Random questions from all available problems
+                        </p>
+                      </div>
+                      <span
+                        className="text-lg font-bold"
+                        style={{ color: "#FA8112" }}
+                      >
+                        {allProblems.length}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium whitespace-nowrap" style={{ color: '#F5E7C6' }}>
-                      {((quizStats.completed / quizStats.total) * 100).toFixed(0)}%
-                    </span>
+                  </button>
+
+                  {/* Favorites */}
+                  <button
+                    onClick={() => {
+                      setProblemSource("favorites");
+                      setSelectedQuizSet(null);
+                    }}
+                    className="w-full p-4 rounded-lg text-left transition duration-300"
+                    style={{
+                      backgroundColor:
+                        problemSource === "favorites"
+                          ? "rgba(250,129,18,0.15)"
+                          : "#303030",
+                      borderColor:
+                        problemSource === "favorites"
+                          ? "rgba(250,129,18,0.35)"
+                          : "transparent",
+                      border: problemSource === "favorites" ? "2px solid" : "none",
+                    }}
+                    disabled={favorites.length === 0}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className="font-medium"
+                          style={{
+                            color:
+                              favorites.length === 0
+                                ? "rgba(245,231,198,0.4)"
+                                : "#FAF3E1",
+                          }}
+                        >
+                          ⭐ Favorites
+                        </p>
+                        <p
+                          className="text-sm"
+                          style={{ color: "rgba(245,231,198,0.6)" }}
+                        >
+                          Questions from your favorite problems
+                        </p>
+                      </div>
+                      <span
+                        className="text-lg font-bold"
+                        style={{ color: "#FA8112" }}
+                      >
+                        {favorites.length}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Custom Quiz Sets */}
+                  {quizSets.length > 0 && (
+                    <div className="pt-2">
+                      <p
+                        className="text-sm font-medium mb-2"
+                        style={{ color: "rgba(245,231,198,0.6)" }}
+                      >
+                        📋 Custom Quiz Sets
+                      </p>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {quizSets.map((set) => (
+                          <button
+                            key={set.id}
+                            onClick={() => {
+                              setProblemSource("custom");
+                              setSelectedQuizSet(set);
+                            }}
+                            className="w-full p-3 rounded-lg text-left transition duration-300"
+                            style={{
+                              backgroundColor:
+                                problemSource === "custom" &&
+                                selectedQuizSet?.id === set.id
+                                  ? "rgba(250,129,18,0.15)"
+                                  : "#222222",
+                              borderColor:
+                                problemSource === "custom" &&
+                                selectedQuizSet?.id === set.id
+                                  ? "rgba(250,129,18,0.35)"
+                                  : "transparent",
+                              border:
+                                problemSource === "custom" &&
+                                selectedQuizSet?.id === set.id
+                                  ? "2px solid"
+                                  : "none",
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p
+                                className="font-medium truncate"
+                                style={{ color: "#FAF3E1" }}
+                              >
+                                {set.name}
+                              </p>
+                              <span
+                                className="text-sm font-bold"
+                                style={{ color: "#FA8112" }}
+                              >
+                                {set.set?.length || 0}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quiz Settings */}
+              <div
+                className="p-6 rounded-lg border"
+                style={{
+                  backgroundColor: "#2A2A2A",
+                  borderColor: "rgba(255,255,255,0.08)",
+                }}
+              >
+                <h2
+                  className="text-xl font-bold mb-4"
+                  style={{ color: "#FA8112" }}
+                >
+                  ⚙️ Quiz Settings
+                </h2>
+
+                {/* Question Count */}
+                <div className="mb-6">
+                  <label
+                    className="block mb-2 font-medium"
+                    style={{ color: "#F5E7C6" }}
+                  >
+                    Number of Questions: {questionCount}
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max={Math.min(getAvailableProblemsCount(), 50)}
+                    value={Math.min(questionCount, getAvailableProblemsCount())}
+                    onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                    className="w-full"
+                    style={{ accentColor: "#FA8112" }}
+                  />
+                  <div
+                    className="flex justify-between text-xs mt-1"
+                    style={{ color: "rgba(245,231,198,0.6)" }}
+                  >
+                    <span>1</span>
+                    <span>{Math.min(getAvailableProblemsCount(), 50)}</span>
                   </div>
                 </div>
+
+                {/* Timer Toggle */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-medium" style={{ color: "#F5E7C6" }}>
+                        ⏱️ Enable Timer
+                      </p>
+                      <p
+                        className="text-sm"
+                        style={{ color: "rgba(245,231,198,0.6)" }}
+                      >
+                        Add time pressure to your quiz
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={timerEnabled}
+                        onChange={(e) => setTimerEnabled(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div
+                        className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
+                        style={{
+                          backgroundColor: timerEnabled ? "#FA8112" : "#303030",
+                        }}
+                      ></div>
+                    </label>
+                  </div>
+
+                  {/* Timer Duration */}
+                  {timerEnabled && (
+                    <div
+                      className="p-4 rounded-lg"
+                      style={{ backgroundColor: "#303030" }}
+                    >
+                      <label
+                        className="block mb-2 text-sm font-medium"
+                        style={{ color: "#F5E7C6" }}
+                      >
+                        Timer Duration: {timerDuration} minutes
+                      </label>
+                      <input
+                        type="range"
+                        min="5"
+                        max="120"
+                        step="5"
+                        value={timerDuration}
+                        onChange={(e) =>
+                          setTimerDuration(parseInt(e.target.value))
+                        }
+                        className="w-full"
+                        style={{ accentColor: "#FA8112" }}
+                      />
+                      <div
+                        className="flex justify-between text-xs mt-1"
+                        style={{ color: "rgba(245,231,198,0.6)" }}
+                      >
+                        <span>5 min</span>
+                        <span>120 min</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quiz Summary */}
+                <div
+                  className="p-4 rounded-lg mb-6"
+                  style={{
+                    backgroundColor: "rgba(250,129,18,0.15)",
+                    borderColor: "rgba(250,129,18,0.35)",
+                    border: "1px solid",
+                  }}
+                >
+                  <h3
+                    className="font-semibold mb-2"
+                    style={{ color: "#FA8112" }}
+                  >
+                    Quiz Summary
+                  </h3>
+                  <ul
+                    className="text-sm space-y-1"
+                    style={{ color: "#F5E7C6" }}
+                  >
+                    <li>
+                      📚 Source:{" "}
+                      {problemSource === "all"
+                        ? "All Problems"
+                        : problemSource === "favorites"
+                        ? "Favorites"
+                        : selectedQuizSet?.name || "Select a set"}
+                    </li>
+                    <li>❓ Questions: {questionCount}</li>
+                    <li>
+                      ⏱️ Timer:{" "}
+                      {timerEnabled ? `${timerDuration} minutes` : "Disabled"}
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Start Button */}
+                <button
+                  onClick={handleStartQuiz}
+                  disabled={getAvailableProblemsCount() === 0}
+                  className="w-full py-4 rounded-lg font-bold text-lg transition duration-300"
+                  style={{
+                    backgroundColor:
+                      getAvailableProblemsCount() === 0 ? "#404040" : "#FA8112",
+                    color:
+                      getAvailableProblemsCount() === 0 ? "#666666" : "#222222",
+                    cursor:
+                      getAvailableProblemsCount() === 0
+                        ? "not-allowed"
+                        : "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (getAvailableProblemsCount() > 0) {
+                      e.target.style.backgroundColor = "#E9720F";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (getAvailableProblemsCount() > 0) {
+                      e.target.style.backgroundColor = "#FA8112";
+                    }
+                  }}
+                >
+                  🚀 Start Quiz
+                </button>
               </div>
             </div>
           )}
-
-          {/* Quiz Content */}
-          <div className="mt-6">
-            {problem ? (
-              <QuizCard problem={problem} onNext={handleNextQuiz} />
-            ) : (
-              <div 
-                className="text-center py-12 md:py-16 rounded-lg border"
-                style={{ 
-                  backgroundColor: '#2A2A2A',
-                  borderColor: 'rgba(255,255,255,0.08)'
-                }}
-              >
-                <div className="text-5xl md:text-6xl mb-4">🎉</div>
-                <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: '#FAF3E1' }}>
-                  All Quizzes Completed!
-                </h2>
-                <p className="mb-6 text-sm md:text-base px-4" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                  Congratulations! You&apos;ve completed all available quizzes.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center px-4">
-                  <button
-                    onClick={() => router.push("/dashboard/problems")}
-                    className="px-6 py-3 rounded-lg font-medium transition duration-300"
-                    style={{ backgroundColor: '#FA8112', color: '#222222' }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#E9720F'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#FA8112'}
-                  >
-                    Browse Problems
-                  </button>
-                  <button
-                    onClick={() => router.push("/dashboard/progress")}
-                    className="px-6 py-3 rounded-lg font-medium transition duration-300"
-                    style={{ backgroundColor: '#303030', color: '#F5E7C6' }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#FA8112';
-                      e.target.style.color = '#222222';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = '#303030';
-                      e.target.style.color = '#F5E7C6';
-                    }}
-                  >
-                    View Progress
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

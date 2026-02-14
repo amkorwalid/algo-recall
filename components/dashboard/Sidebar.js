@@ -11,9 +11,8 @@ export default function Sidebar() {
     { name: "Dashboard", icon: "🏠", path: "/dashboard" },
     { name: "Problems", icon: "📚", path: "/dashboard/problems" },
     { name: "Quiz", icon: "🧠", path: "/dashboard/quiz" },
-    // { name: "Progress", icon: "📊", path: "/dashboard/progress" },
+    { name: "Quiz Sets", icon: "📋", path: "/dashboard/quiz-sets" },
     { name: "Favorites", icon: "⭐", path: "/dashboard/favorites" },
-    // { name: "Settings", icon: "⚙️", path: "/dashboard/settings" },
   ];
 
   const isActive = (path) => router.pathname === path;
