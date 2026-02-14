@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
@@ -12,6 +12,7 @@ import BulkActionsBar from "../../components/dashboard/BulkActionsBar";
 export default function ProblemsPage() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
 
   const [problems, setProblems] = useState([]);
   const [filteredProblems, setFilteredProblems] = useState([]);
@@ -19,6 +20,7 @@ export default function ProblemsPage() {
   const [favorites, setFavorites] = useState([]);
   const [problemStatus, setProblemStatus] = useState({});
   const [selectedProblem, setSelectedProblem] = useState(null);
+  const [quizSetName, setQuizSetName] = useState("");
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -29,7 +31,7 @@ export default function ProblemsPage() {
   useEffect(() => {
     const run = async () => {
       const supabase = supabaseBrowser();
-      const { data, error } = await supabase.from("genai_problems").select("*");
+      const { data, error } = await supabase.from("generated_questions").select("*");
       if (error) console.error(error);
       setProblems(data ?? []);
       setFilteredProblems(data ?? []);
@@ -96,11 +98,22 @@ export default function ProblemsPage() {
   };
 
   const handleBulkAddToQuizSet = () => {
-    const quizSet = JSON.parse(localStorage.getItem("customQuizSet") || "[]");
-    const updated = [...new Set([...quizSet, ...selectedProblems])];
-    localStorage.setItem("customQuizSet", JSON.stringify(updated));
-    alert(`${selectedProblems.length} problem(s) added to quiz set!`);
-    setSelectedProblems([]);
+    const name = prompt("Enter a name for this quiz set:");
+    
+    if (!name || name.trim() === "") {
+      alert("Quiz set name cannot be empty!");
+      return;
+    }
+
+    const run = async () => {
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase.rpc('insert_quizzes_set', {"name": name.trim(), "user_id": user.id, "set": selectedProblems});
+      if (error) throw error;
+      alert(`${selectedProblems.length} problem(s) added to quiz set "${name.trim()}"!`);
+      setSelectedProblems([]);
+      setQuizSetName("");
+    };
+    run();
   };
 
   const handleBulkMarkFavorite = () => {

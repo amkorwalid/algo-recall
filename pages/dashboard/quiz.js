@@ -42,7 +42,7 @@ export default function QuizPage() {
   useEffect(() => {
     const run = async () => {
       const supabase = supabaseBrowser();
-      const { data, error } = await supabase.from("genai_problems").select("*");
+      const { data, error } = await supabase.from("generated_questions").select("*");
       if (error) console.error(error);
       setData(data ?? []);
       loadRandomQuiz(data ?? []);
@@ -68,7 +68,7 @@ export default function QuizPage() {
   return isSignedIn ? (
     <div className="flex min-h-screen" style={{ backgroundColor: '#222222' }}>
       <Sidebar />
-      <div className="flex-grow w-full md:w-auto overflow-x-hidden">
+      <div className="grow w-full md:w-auto relative">
         <Header />
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
           {/* Header Section */}
@@ -136,7 +136,7 @@ export default function QuizPage() {
                   All Quizzes Completed!
                 </h2>
                 <p className="mb-6 text-sm md:text-base px-4" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                  Congratulations! You've completed all available quizzes.
+                  Congratulations! You&apos;ve completed all available quizzes.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center px-4">
                   <button

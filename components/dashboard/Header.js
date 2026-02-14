@@ -3,6 +3,7 @@ import Link from "next/link";
 
 export default function Header() {
   const { user } = useUser();
+  console.log("User ID:", user.id);
 
   return (
     <header 

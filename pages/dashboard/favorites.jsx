@@ -95,7 +95,7 @@ export default function FavoritesPage() {
   return isSignedIn ? (
     <div className="flex min-h-screen" style={{ backgroundColor: '#222222' }}>
       <Sidebar />
-      <div className="flex-grow w-full md:w-auto overflow-x-hidden">
+      <div className="grow relative w-full md:w-auto">
         <Header />
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
           {/* Header Section */}
