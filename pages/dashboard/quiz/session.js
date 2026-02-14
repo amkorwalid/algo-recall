@@ -115,6 +115,8 @@ export default function QuizSessionPage() {
         clearInterval(timerRef.current);
       }
     };
+    // timeRemaining is intentionally omitted from dependencies because we use
+    // the functional form of setState (prev => prev - 1) which doesn't require it
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTimerRunning, handleTimeUp]);
 

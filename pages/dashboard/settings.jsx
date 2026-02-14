@@ -27,8 +27,6 @@ export default function SettingsPage() {
       shareProgress: false,
     };
     
-    if (typeof window === 'undefined') return defaultSettings;
-    
     const savedSettings = JSON.parse(localStorage.getItem("userSettings") || "{}");
     return { ...defaultSettings, ...savedSettings };
   });

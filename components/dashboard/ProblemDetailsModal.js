@@ -9,16 +9,14 @@ export default function ProblemDetailsModal({ problem, onClose, onStartQuiz }) {
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (!problem) return;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [problem]);
+  }, []);
 
   // Close modal on escape key
   useEffect(() => {
-    if (!problem) return;
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         onClose();
@@ -26,7 +24,7 @@ export default function ProblemDetailsModal({ problem, onClose, onStartQuiz }) {
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [onClose, problem]);
+  }, [onClose]);
 
   if (!problem) return null;
 
