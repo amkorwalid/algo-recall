@@ -29,7 +29,7 @@ export default function Home() {
         <Features />
         <WhoItsFor />
         <WhyAlgoRecall />
-        <Pricing />
+        {/* <Pricing /> */}
         <FinalCTA />
         <Footer />
       </div>
