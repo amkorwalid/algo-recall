@@ -20,7 +20,6 @@ export default function ProblemsPage() {
   const [favorites, setFavorites] = useState([]);
   const [problemStatus, setProblemStatus] = useState({});
   const [selectedProblem, setSelectedProblem] = useState(null);
-  const [quizSetName, setQuizSetName] = useState("");
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -38,6 +37,23 @@ export default function ProblemsPage() {
     };
     run();
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !user?.id) return;
+    const run = async () => {
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("problem_id")
+        .eq("user_id", user.id);
+      if (error) {
+        console.error(error);
+        return;
+      }
+      setFavorites((data ?? []).map((row) => row.problem_id));
+    };
+    run();
+  }, [isLoaded, isSignedIn, user?.id]);
 
   const handleFilterChange = ({ difficulty, topics }) => {
     let filtered = problems;
@@ -82,11 +98,31 @@ export default function ProblemsPage() {
   };
 
   const handleToggleFavorite = (id) => {
-    const updated = favorites.includes(id)
-      ? favorites.filter((f) => f !== id)
-      : [...favorites, id];
-    setFavorites(updated);
-    localStorage.setItem("favorites", JSON.stringify(updated));
+    const run = async () => {
+      const supabase = supabaseBrowser();
+      if (favorites.includes(id)) {
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("problem_id", id);
+        if (error) {
+          console.error(error);
+          return;
+        }
+        setFavorites((prev) => prev.filter((f) => f !== id));
+      } else {
+        const { error } = await supabase
+          .from("favorites")
+          .insert({ user_id: user.id, problem_id: id });
+        if (error) {
+          console.error(error);
+          return;
+        }
+        setFavorites((prev) => [...prev, id]);
+      }
+    };
+    run();
   };
 
   const handleStartQuiz = (problem) => {
@@ -111,18 +147,53 @@ export default function ProblemsPage() {
       if (error) throw error;
       alert(`${selectedProblems.length} problem(s) added to quiz set "${name.trim()}"!`);
       setSelectedProblems([]);
-      setQuizSetName("");
     };
     run();
   };
 
   const handleBulkMarkFavorite = () => {
-    const updated = [...new Set([...favorites, ...selectedProblems])];
-    setFavorites(updated);
-    localStorage.setItem("favorites", JSON.stringify(updated));
-    alert(`${selectedProblems.length} problem(s) marked as favorite!`);
-    setSelectedProblems([]);
+  const run = async () => {
+    if (selectedProblems.length === 0) {
+      alert("No problems selected!");
+      return;
+    }
+
+    try {
+      const supabase = supabaseBrowser();
+      
+      // Call the RPC function with user_id and array of problem_ids
+      const { data: insertedCount, error } = await supabase.rpc('insert_favorites', {
+        p_user_id: user.id,
+        p_problem_ids: selectedProblems
+      });
+
+      if (error) {
+        console.error("Error inserting favorites:", error);
+        alert("Failed to add favorites. Please try again.");
+        return;
+      }
+
+      // Update local state - add only new favorites
+      setFavorites((prev) => {
+        const newFavorites = selectedProblems.filter((id) => !prev.includes(id));
+        return [...prev, ...newFavorites];
+      });
+
+      if (insertedCount > 0) {
+        alert(`${insertedCount} problem(s) added to favorites!`);
+      } else {
+        alert("Selected problems are already in favorites!");
+      }
+
+      setSelectedProblems([]);
+    } catch (err) {
+      console.error("Error:", err);
+      alert("An error occurred. Please try again.");
+    }
   };
+
+  run();
+};
 
   const handleExport = () => {
     const exportData = problems.filter((p) => selectedProblems.includes(p.id));

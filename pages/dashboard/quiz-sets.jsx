@@ -20,32 +20,47 @@ export default function QuizSetsPage() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchQuizSets();
-    }
+    const fetchQuizSets = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase
+        .from("quizzes_set")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching quiz sets:", error);
+      } else {
+        setQuizSets(data ?? []);
+      }
+      setLoading(false);
+    };
+
+    fetchQuizSets();
   }, [user]);
 
-  const fetchQuizSets = async () => {
-    setLoading(true);
-    const supabase = supabaseBrowser();
-    const { data, error } = await supabase
-      .from("quizzes_set")
-      .select("*")
-      .eq("user_id", user.id);
-
-    if (error) {
-      console.error("Error fetching quiz sets:", error);
-    } else {
-      setQuizSets(data ?? []);
-    }
-    setLoading(false);
+  // Start quiz immediately with all problems from the set (no timer)
+  const handleStartQuizSet = (quizSet) => {
+    // quizSet.set is an array of integers (problem IDs) from Supabase
+    const quizConfig = {
+      problemIds: quizSet.set || [],
+      timerEnabled: false,
+      timerDuration: null,
+      sourceName: quizSet.name,
+    };
+    localStorage.setItem("quizSessionConfig", JSON.stringify(quizConfig));
+    router.push("/dashboard/quiz/session");
   };
 
-  const handleStartQuizSet = (quizSet) => {
-    // Store the quiz set in localStorage and navigate to quiz page
-    localStorage.setItem("customQuizSet", JSON.stringify(quizSet.set));
-    localStorage.setItem("currentQuizSetName", quizSet.name);
-    router.push("/dashboard/quiz?mode=custom");
+  // Go to quiz config page with this set pre-selected
+  const handleConfigureQuizSet = (quizSet) => {
+    localStorage.setItem("selectedQuizSetId", quizSet.id);
+    localStorage.setItem("selectedQuizSetName", quizSet.name);
+    localStorage.setItem("selectedQuizSetProblems", JSON.stringify(quizSet.set || []));
+    router.push("/dashboard/quiz");
   };
 
   const handleDeleteQuizSet = async (id) => {
@@ -98,6 +113,15 @@ export default function QuizSetsPage() {
                 {quizSets.length !== 1 ? "s" : ""} created
               </p>
             </div>
+            <button
+              onClick={() => router.push("/dashboard/quiz")}
+              className="px-4 py-2 rounded-lg font-medium transition duration-300"
+              style={{ backgroundColor: "#303030", color: "#F5E7C6" }}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#404040")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "#303030")}
+            >
+              ⚙️ Quiz Config
+            </button>
           </div>
 
           {/* Loading State */}
@@ -129,7 +153,7 @@ export default function QuizSetsPage() {
               </h2>
               <p className="mb-4" style={{ color: "rgba(245,231,198,0.6)" }}>
                 Create custom quiz sets from the Problems page by selecting
-                problems and clicking "Add to Quiz Set"
+                problems and clicking &quot;Add to Quiz Set&quot;
               </p>
               <button
                 onClick={() => router.push("/dashboard/problems")}
@@ -206,10 +230,10 @@ export default function QuizSetsPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
                     <button
                       onClick={() => handleStartQuizSet(quizSet)}
-                      className="flex-1 px-4 py-2 rounded-lg font-medium transition duration-300 text-sm md:text-base"
+                      className="w-full px-4 py-2 rounded-lg font-medium transition duration-300 text-sm md:text-base"
                       style={{ backgroundColor: "#FA8112", color: "#222222" }}
                       onMouseEnter={(e) =>
                         (e.target.style.backgroundColor = "#E9720F")
@@ -218,26 +242,44 @@ export default function QuizSetsPage() {
                         (e.target.style.backgroundColor = "#FA8112")
                       }
                     >
-                      Start Quiz
+                      🚀 Start Quiz
                     </button>
-                    <button
-                      onClick={() => handleDeleteQuizSet(quizSet.id)}
-                      className="px-4 py-2 rounded-lg transition duration-300 text-sm md:text-base"
-                      style={{
-                        backgroundColor: "#303030",
-                        color: "rgba(245,231,198,0.6)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = "#ef4444";
-                        e.target.style.color = "#ffffff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = "#303030";
-                        e.target.style.color = "rgba(245,231,198,0.6)";
-                      }}
-                    >
-                      🗑️
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleConfigureQuizSet(quizSet)}
+                        className="flex-1 px-4 py-2 rounded-lg transition duration-300 text-sm md:text-base"
+                        style={{
+                          backgroundColor: "#303030",
+                          color: "#F5E7C6",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "#404040";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "#303030";
+                        }}
+                      >
+                        ⚙️ Configure
+                      </button>
+                      <button
+                        onClick={() => handleDeleteQuizSet(quizSet.id)}
+                        className="px-4 py-2 rounded-lg transition duration-300 text-sm md:text-base"
+                        style={{
+                          backgroundColor: "#303030",
+                          color: "rgba(245,231,198,0.6)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "#ef4444";
+                          e.target.style.color = "#ffffff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "#303030";
+                          e.target.style.color = "rgba(245,231,198,0.6)";
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

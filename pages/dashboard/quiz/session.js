@@ -31,12 +31,18 @@ export default function QuizSessionPage() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const difficultyColors = {
     easy: "#22c55e",
     medium: "#eab308",
     hard: "#ef4444",
   };
+
+  // Define handleTimeUp before it's used in useEffect
+  const handleTimeUp = useCallback(() => {
+    setQuizComplete(true);
+  }, []);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -46,43 +52,81 @@ export default function QuizSessionPage() {
 
   useEffect(() => {
     const loadQuizSession = async () => {
-      const configStr = localStorage.getItem("quizSessionConfig");
-      if (!configStr) {
-        router.push("/dashboard/quiz");
-        return;
+      try {
+        const configStr = localStorage.getItem("quizSessionConfig");
+        if (!configStr) {
+          router.push("/dashboard/quiz");
+          return;
+        }
+
+        const config = JSON.parse(configStr);
+        setSourceName(config.sourceName || "Quiz");
+
+        // Validate problemIds
+        if (!config.problemIds || !Array.isArray(config.problemIds) || config.problemIds.length === 0) {
+          setError("No problems found in quiz configuration");
+          setLoading(false);
+          return;
+        }
+
+        // Ensure all IDs are integers for Supabase query
+        const problemIds = config.problemIds.map((id) => {
+          const parsed = parseInt(id, 10);
+          return isNaN(parsed) ? id : parsed;
+        });
+
+        console.log("Loading problems with IDs:", problemIds);
+
+        // Load problems from Supabase
+        const supabase = supabaseBrowser();
+        const { data, error: queryError } = await supabase
+          .from("generated_questions")
+          .select("*")
+          .in("id", problemIds);
+
+        if (queryError) {
+          console.error("Supabase query error:", queryError);
+          setError("Failed to load quiz problems");
+          setLoading(false);
+          return;
+        }
+
+        console.log("Loaded problems:", data);
+
+        if (!data || data.length === 0) {
+          setError("No problems found matching the quiz configuration");
+          setLoading(false);
+          return;
+        }
+
+        // Order problems to match the config order
+        const orderedProblems = problemIds
+          .map((id) => data.find((p) => p.id === id || String(p.id) === String(id)))
+          .filter(Boolean);
+
+        console.log("Ordered problems:", orderedProblems);
+
+        if (orderedProblems.length === 0) {
+          setError("Could not match problems to configuration");
+          setLoading(false);
+          return;
+        }
+
+        setProblems(orderedProblems);
+
+        // Setup timer
+        if (config.timerEnabled && config.timerDuration) {
+          setTimerEnabled(true);
+          setTimeRemaining(config.timerDuration * 60);
+          setIsTimerRunning(true);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading quiz session:", err);
+        setError("An error occurred while loading the quiz");
+        setLoading(false);
       }
-
-      const config = JSON.parse(configStr);
-      setSourceName(config.sourceName);
-
-      // Load problems from Supabase
-      const supabase = supabaseBrowser();
-      const { data, error } = await supabase
-        .from("generated_questions")
-        .select("*")
-        .in("id", config.problemIds);
-
-      if (error) {
-        console.error(error);
-        router.push("/dashboard/quiz");
-        return;
-      }
-
-      // Shuffle problems to match the order in config
-      const orderedProblems = config.problemIds
-        .map((id) => data.find((p) => p.id === id))
-        .filter(Boolean);
-
-      setProblems(orderedProblems);
-
-      // Setup timer
-      if (config.timerEnabled && config.timerDuration) {
-        setTimerEnabled(true);
-        setTimeRemaining(config.timerDuration * 60); // Convert to seconds
-        setIsTimerRunning(true);
-      }
-
-      setLoading(false);
     };
 
     if (isLoaded && isSignedIn) {
@@ -111,11 +155,7 @@ export default function QuizSessionPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, [isTimerRunning]);
-
-  const handleTimeUp = useCallback(() => {
-    setQuizComplete(true);
-  }, []);
+  }, [isTimerRunning, handleTimeUp]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -189,6 +229,7 @@ export default function QuizSessionPage() {
     router.push("/dashboard/quiz");
   };
 
+  // Loading state
   if (!isLoaded || loading) {
     return (
       <div
@@ -196,6 +237,84 @@ export default function QuizSessionPage() {
         style={{ backgroundColor: "#222222" }}
       >
         <div style={{ color: "#FAF3E1" }}>Loading quiz...</div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ backgroundColor: "#222222" }}
+      >
+        <div
+          className="p-6 rounded-lg text-center max-w-md"
+          style={{ backgroundColor: "#2A2A2A" }}
+        >
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2
+            className="text-xl font-bold mb-2"
+            style={{ color: "#FAF3E1" }}
+          >
+            Quiz Loading Error
+          </h2>
+          <p className="mb-4" style={{ color: "rgba(245,231,198,0.6)" }}>
+            {error}
+          </p>
+          <button
+            onClick={() => router.push("/dashboard/quiz")}
+            className="px-6 py-2 rounded-lg font-medium transition duration-300"
+            style={{ backgroundColor: "#FA8112", color: "#222222" }}
+            onMouseEnter={(e) =>
+              (e.target.style.backgroundColor = "#E9720F")
+            }
+            onMouseLeave={(e) =>
+              (e.target.style.backgroundColor = "#FA8112")
+            }
+          >
+            Back to Quiz Setup
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // No problems state
+  if (problems.length === 0) {
+    return (
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ backgroundColor: "#222222" }}
+      >
+        <div
+          className="p-6 rounded-lg text-center max-w-md"
+          style={{ backgroundColor: "#2A2A2A" }}
+        >
+          <div className="text-5xl mb-4">📭</div>
+          <h2
+            className="text-xl font-bold mb-2"
+            style={{ color: "#FAF3E1" }}
+          >
+            No Problems Found
+          </h2>
+          <p className="mb-4" style={{ color: "rgba(245,231,198,0.6)" }}>
+            The quiz could not find any problems to display.
+          </p>
+          <button
+            onClick={() => router.push("/dashboard/quiz")}
+            className="px-6 py-2 rounded-lg font-medium transition duration-300"
+            style={{ backgroundColor: "#FA8112", color: "#222222" }}
+            onMouseEnter={(e) =>
+              (e.target.style.backgroundColor = "#E9720F")
+            }
+            onMouseLeave={(e) =>
+              (e.target.style.backgroundColor = "#FA8112")
+            }
+          >
+            Back to Quiz Setup
+          </button>
+        </div>
       </div>
     );
   }
@@ -431,21 +550,24 @@ export default function QuizSessionPage() {
                   className="px-3 py-1 rounded text-xs md:text-sm font-medium text-white"
                   style={{
                     backgroundColor:
-                      difficultyColors[currentProblem.difficulty],
+                      difficultyColors[currentProblem.difficulty] || "#666",
                   }}
                 >
-                  {currentProblem.difficulty.charAt(0).toUpperCase() +
-                    currentProblem.difficulty.slice(1)}
+                  {currentProblem.difficulty
+                    ? currentProblem.difficulty.charAt(0).toUpperCase() +
+                      currentProblem.difficulty.slice(1)
+                    : "Unknown"}
                 </span>
-                {currentProblem.topics.slice(0, 3).map((topic, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-1 rounded text-xs"
-                    style={{ backgroundColor: "#303030", color: "#F5E7C6" }}
-                  >
-                    {topic.replace("_", " ")}
-                  </span>
-                ))}
+                {currentProblem.topics &&
+                  currentProblem.topics.slice(0, 3).map((topic, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-1 rounded text-xs"
+                      style={{ backgroundColor: "#303030", color: "#F5E7C6" }}
+                    >
+                      {topic.replace("_", " ")}
+                    </span>
+                  ))}
               </div>
             </div>
 
@@ -466,10 +588,11 @@ export default function QuizSessionPage() {
                 className="text-lg md:text-xl font-bold mb-4"
                 style={{ color: "#FA8112" }}
               >
-                {currentProblem.quiz.question}
+                {currentProblem.quiz?.question || "No question available"}
               </h3>
               <div className="space-y-3">
-                {Array.isArray(currentProblem.quiz.options) &&
+                {currentProblem.quiz?.options &&
+                  Array.isArray(currentProblem.quiz.options) &&
                   currentProblem.quiz.options.map((option, index) => {
                     let optionStyle = {
                       backgroundColor: "#222222",
@@ -576,7 +699,7 @@ export default function QuizSessionPage() {
             </div>
 
             {/* Key Insight */}
-            {showInsight && (
+            {showInsight && currentProblem.key_insight && (
               <div
                 className="p-4 border rounded-lg mb-4"
                 style={{
@@ -594,58 +717,66 @@ export default function QuizSessionPage() {
             {/* Detailed Explanation (after checking) */}
             {isResponseChecked && (
               <div className="space-y-4">
-                <div
-                  className="p-4 rounded-lg"
-                  style={{ backgroundColor: "#303030" }}
-                >
-                  <h4
-                    className="font-semibold mb-2"
-                    style={{ color: "#FA8112" }}
+                {currentProblem.canonical_idea?.one_liner && (
+                  <div
+                    className="p-4 rounded-lg"
+                    style={{ backgroundColor: "#303030" }}
                   >
-                    📌 Canonical Idea
-                  </h4>
-                  <p style={{ color: "#F5E7C6" }}>
-                    {currentProblem.canonical_idea.one_liner}
-                  </p>
-                </div>
+                    <h4
+                      className="font-semibold mb-2"
+                      style={{ color: "#FA8112" }}
+                    >
+                      📌 Canonical Idea
+                    </h4>
+                    <p style={{ color: "#F5E7C6" }}>
+                      {currentProblem.canonical_idea.one_liner}
+                    </p>
+                  </div>
+                )}
 
-                <div
-                  className="p-4 rounded-lg"
-                  style={{ backgroundColor: "#303030" }}
-                >
-                  <h4
-                    className="font-semibold mb-2"
-                    style={{ color: "#FA8112" }}
-                  >
-                    💻 Pseudocode
-                  </h4>
-                  <pre
-                    className="p-4 rounded text-sm overflow-x-auto"
-                    style={{ backgroundColor: "#222222", color: "#F5E7C6" }}
-                  >
-                    {currentProblem.pseudo_code.join("\n")}
-                  </pre>
-                </div>
+                {currentProblem.pseudo_code &&
+                  Array.isArray(currentProblem.pseudo_code) && (
+                    <div
+                      className="p-4 rounded-lg"
+                      style={{ backgroundColor: "#303030" }}
+                    >
+                      <h4
+                        className="font-semibold mb-2"
+                        style={{ color: "#FA8112" }}
+                      >
+                        💻 Pseudocode
+                      </h4>
+                      <pre
+                        className="p-4 rounded text-sm overflow-x-auto"
+                        style={{ backgroundColor: "#222222", color: "#F5E7C6" }}
+                      >
+                        {currentProblem.pseudo_code.join("\n")}
+                      </pre>
+                    </div>
+                  )}
 
-                <div
-                  className="p-4 rounded-lg"
-                  style={{ backgroundColor: "#303030" }}
-                >
-                  <h4
-                    className="font-semibold mb-2"
-                    style={{ color: "#FA8112" }}
-                  >
-                    ⚠️ Common Traps
-                  </h4>
-                  <ul
-                    className="list-disc list-inside space-y-1"
-                    style={{ color: "#F5E7C6" }}
-                  >
-                    {currentProblem.common_traps.map((trap, index) => (
-                      <li key={index}>{trap}</li>
-                    ))}
-                  </ul>
-                </div>
+                {currentProblem.common_traps &&
+                  Array.isArray(currentProblem.common_traps) && (
+                    <div
+                      className="p-4 rounded-lg"
+                      style={{ backgroundColor: "#303030" }}
+                    >
+                      <h4
+                        className="font-semibold mb-2"
+                        style={{ color: "#FA8112" }}
+                      >
+                        ⚠️ Common Traps
+                      </h4>
+                      <ul
+                        className="list-disc list-inside space-y-1"
+                        style={{ color: "#F5E7C6" }}
+                      >
+                        {currentProblem.common_traps.map((trap, index) => (
+                          <li key={index}>{trap}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
               </div>
             )}
           </div>

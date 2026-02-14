@@ -1,12 +1,14 @@
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import Sidebar from "../../components/dashboard/Sidebar";
 import Header from "../../components/dashboard/Header";
 
 export default function DashboardHome() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
 
   const [stats, setStats] = useState({
     totalProblems: 0,
@@ -24,29 +26,38 @@ export default function DashboardHome() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    fetch("/data.json")
-      .then((res) => res.json())
-      .then((data) => {
-        const problemStatus = JSON.parse(localStorage.getItem("problemStatus") || "{}");
-        const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-
-        const completed = Object.values(problemStatus).filter((s) => s === "completed").length;
-        const inProgress = Object.values(problemStatus).filter((s) => s === "in_progress").length;
-
-        setStats({
-          totalProblems: data.problems.length,
-          completed,
-          inProgress,
-          favorites: favorites.length,
-        });
-
-        setRecentActivity([
-          { type: "quiz", problem: "Longest Substring Without Repeating Characters", result: "completed", time: "2 hours ago" },
-          { type: "favorite", problem: "Valid Anagram", time: "5 hours ago" },
-          { type: "quiz", problem: "Top K Frequent Elements", result: "in_progress", time: "1 day ago" },
+    if (!isLoaded || !isSignedIn || !user?.id) return;
+    const run = async () => {
+      const supabase = supabaseBrowser();
+      const [{ data: problemsData, error: problemsError }, { data: favoritesData, error: favoritesError }, { data: quizSetsData, error: quizSetsError }] =
+        await Promise.all([
+          supabase.from("generated_questions").select("id"),
+          supabase.from("favorites").select("problem_id").eq("user_id", user.id),
+          supabase.from("quizzes_set").select("id").eq("user_id", user.id),
         ]);
+
+      if (problemsError) console.error(problemsError);
+      if (favoritesError) console.error(favoritesError);
+      if (quizSetsError) console.error(quizSetsError);
+
+      const problemStatus = JSON.parse(localStorage.getItem("problemStatus") || "{}");
+      const completed = Object.values(problemStatus).filter((s) => s === "completed").length;
+
+
+      setStats({
+        totalProblems: (problemsData ?? []).length,
+        favorites: (favoritesData ?? []).length,
+        quizSets: (quizSetsData ?? []).length,
       });
-  }, []);
+
+      setRecentActivity([
+        { type: "quiz", problem: "Longest Substring Without Repeating Characters", result: "completed", time: "2 hours ago" },
+        { type: "favorite", problem: "Valid Anagram", time: "5 hours ago" },
+        { type: "quiz", problem: "Top K Frequent Elements", result: "in_progress", time: "1 day ago" },
+      ]);
+    };
+    run();
+  }, [isLoaded, isSignedIn, user?.id]);
 
   if (!isLoaded) {
     return (
@@ -66,17 +77,17 @@ export default function DashboardHome() {
         <Header />
         <div className="container px-4 md:px-6 py-8 mx-auto pt-20 md:pt-8">
           {/* Welcome Section */}
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold" style={{ color: '#FAF3E1' }}>
               Welcome to AlgoRecall Dashboard! 👋
             </h1>
             <p className="mt-2 text-sm md:text-base" style={{ color: '#F5E7C6' }}>
               Track your progress, practice problems, and master algorithms with intelligent quizzes.
             </p>
-          </div>
+          </div> */}
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6 mb-8">
             <div 
               className="p-4 md:p-6 rounded-lg border transition duration-300 hover:shadow-lg"
               style={{ 
@@ -101,36 +112,17 @@ export default function DashboardHome() {
                 backgroundColor: '#2A2A2A', 
                 borderColor: 'rgba(255,255,255,0.08)',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#22c55e'}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(250,129,18,0.35)'}
               onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>Completed</p>
-                  <p className="text-2xl md:text-3xl font-bold" style={{ color: '#22c55e' }}>{stats.completed}</p>
+                  <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>Quiz Sets</p>
+                  <p className="text-2xl md:text-3xl font-bold" style={{ color: '#FA8112' }}>{stats.quizSets}</p>
                 </div>
-                <div className="text-2xl md:text-4xl">✅</div>
+                <div className="text-2xl md:text-4xl">📋</div>
               </div>
             </div>
-
-            <div 
-              className="p-4 md:p-6 rounded-lg border transition duration-300 hover:shadow-lg"
-              style={{ 
-                backgroundColor: '#2A2A2A', 
-                borderColor: 'rgba(255,255,255,0.08)',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#eab308'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm" style={{ color: 'rgba(245,231,198,0.6)' }}>In Progress</p>
-                  <p className="text-2xl md:text-3xl font-bold" style={{ color: '#eab308' }}>{stats.inProgress}</p>
-                </div>
-                <div className="text-2xl md:text-4xl">⚠️</div>
-              </div>
-            </div>
-
             <div 
               className="p-4 md:p-6 rounded-lg border transition duration-300 hover:shadow-lg"
               style={{ 
@@ -195,7 +187,7 @@ export default function DashboardHome() {
                   e.currentTarget.style.backgroundColor = '#2A2A2A';
                 }}
               >
-                <div className="text-3xl md:text-4xl mb-2">📝</div>
+                <div className="text-3xl md:text-4xl mb-2">📚</div>
                 <h3 className="text-lg md:text-xl font-semibold" style={{ color: '#FA8112' }}>
                   Browse Problems
                 </h3>
@@ -205,7 +197,7 @@ export default function DashboardHome() {
               </button>
 
               <button
-                onClick={() => router.push("/dashboard/quiz")}
+                onClick={() => router.push("/dashboard/quiz-sets")}
                 className="p-4 md:p-6 rounded-lg border transition duration-300"
                 style={{ 
                   backgroundColor: '#2A2A2A', 
@@ -220,12 +212,12 @@ export default function DashboardHome() {
                   e.currentTarget.style.backgroundColor = '#2A2A2A';
                 }}
               >
-                <div className="text-3xl md:text-4xl mb-2">⏱️</div>
+                <div className="text-3xl md:text-4xl mb-2">📋</div>
                 <h3 className="text-lg md:text-xl font-semibold" style={{ color: '#FA8112' }}>
-                  Timed Challenge
+                  Quiz sets
                 </h3>
                 <p className="text-xs md:text-sm mt-2" style={{ color: 'rgba(245,231,198,0.6)' }}>
-                  Practice under time pressure
+                  Practice your custom quiz sets
                 </p>
               </button>
             </div>
@@ -274,7 +266,7 @@ export default function DashboardHome() {
           </div>
 
           {/* Recent Activity */}
-          <div>
+          {/* <div>
             <h2 className="text-xl md:text-2xl font-bold mb-4" style={{ color: '#FAF3E1' }}>Recent Activity</h2>
             <div 
               className="rounded-lg border overflow-hidden"
@@ -320,7 +312,7 @@ export default function DashboardHome() {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
