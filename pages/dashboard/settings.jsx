@@ -11,19 +11,26 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState("account");
   const [showMobileTabs, setShowMobileTabs] = useState(false);
-  const [settings, setSettings] = useState({
-    defaultQuizMode: "random",
-    questionsPerQuiz: 5,
-    timerEnabled: false,
-    timerDuration: 30,
-    showHintsAutomatically: false,
-    theme: "dark",
-    showProgressBar: true,
-    emailNotifications: true,
-    quizReminders: false,
-    weeklyProgress: true,
-    profileVisibility: "private",
-    shareProgress: false,
+  const [settings, setSettings] = useState(() => {
+    const defaultSettings = {
+      defaultQuizMode: "random",
+      questionsPerQuiz: 5,
+      timerEnabled: false,
+      timerDuration: 30,
+      showHintsAutomatically: false,
+      theme: "dark",
+      showProgressBar: true,
+      emailNotifications: true,
+      quizReminders: false,
+      weeklyProgress: true,
+      profileVisibility: "private",
+      shareProgress: false,
+    };
+    
+    if (typeof window === 'undefined') return defaultSettings;
+    
+    const savedSettings = JSON.parse(localStorage.getItem("userSettings") || "{}");
+    return { ...defaultSettings, ...savedSettings };
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -34,11 +41,6 @@ export default function SettingsPage() {
       router.push("/sign-in");
     }
   }, [isLoaded, isSignedIn, router]);
-
-  useEffect(() => {
-    const savedSettings = JSON.parse(localStorage.getItem("userSettings") || "{}");
-    setSettings({ ...settings, ...savedSettings });
-  }, []);
 
   const handleSettingChange = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));

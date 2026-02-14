@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 
 export default function ProblemDetailsModal({ problem, onClose, onStartQuiz }) {
-  if (!problem) return null;
-
   const difficultyColors = {
     easy: '#22c55e',
     medium: '#eab308',
@@ -11,14 +9,16 @@ export default function ProblemDetailsModal({ problem, onClose, onStartQuiz }) {
 
   // Prevent body scroll when modal is open
   useEffect(() => {
+    if (!problem) return;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, []);
+  }, [problem]);
 
   // Close modal on escape key
   useEffect(() => {
+    if (!problem) return;
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         onClose();
@@ -26,7 +26,9 @@ export default function ProblemDetailsModal({ problem, onClose, onStartQuiz }) {
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+  }, [onClose, problem]);
+
+  if (!problem) return null;
 
   return (
     <div 

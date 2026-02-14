@@ -20,26 +20,25 @@ export default function QuizSetsPage() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchQuizSets();
-    }
+    const fetchQuizSets = async () => {
+      if (!user) return;
+      setLoading(true);
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase
+        .from("quizzes_set")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching quiz sets:", error);
+      } else {
+        setQuizSets(data ?? []);
+      }
+      setLoading(false);
+    };
+
+    fetchQuizSets();
   }, [user]);
-
-  const fetchQuizSets = async () => {
-    setLoading(true);
-    const supabase = supabaseBrowser();
-    const { data, error } = await supabase
-      .from("quizzes_set")
-      .select("*")
-      .eq("user_id", user.id);
-
-    if (error) {
-      console.error("Error fetching quiz sets:", error);
-    } else {
-      setQuizSets(data ?? []);
-    }
-    setLoading(false);
-  };
 
   const handleStartQuizSet = (quizSet) => {
     // Store the quiz set in localStorage and navigate to quiz page
@@ -129,7 +128,7 @@ export default function QuizSetsPage() {
               </h2>
               <p className="mb-4" style={{ color: "rgba(245,231,198,0.6)" }}>
                 Create custom quiz sets from the Problems page by selecting
-                problems and clicking "Add to Quiz Set"
+                problems and clicking &quot;Add to Quiz Set&quot;
               </p>
               <button
                 onClick={() => router.push("/dashboard/problems")}

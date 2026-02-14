@@ -44,6 +44,10 @@ export default function QuizSessionPage() {
     }
   }, [isLoaded, isSignedIn, router]);
 
+  const handleTimeUp = useCallback(() => {
+    setQuizComplete(true);
+  }, []);
+
   useEffect(() => {
     const loadQuizSession = async () => {
       const configStr = localStorage.getItem("quizSessionConfig");
@@ -111,11 +115,8 @@ export default function QuizSessionPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, [isTimerRunning]);
-
-  const handleTimeUp = useCallback(() => {
-    setQuizComplete(true);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTimerRunning, handleTimeUp]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
