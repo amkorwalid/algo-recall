@@ -5,12 +5,7 @@ export default function ProblemCard({ problem, status, onSelect, isSelected, onT
     hard: '#ef4444',
   };
 
-  const statusIcons = {
-    completed: '✅',
-    in_progress: '⚠️',
-    not_attempted: '❌',
-  };
-
+  
   return (
     <div 
       className="p-3 md:p-4 rounded-lg border transition duration-300"
@@ -49,7 +44,6 @@ export default function ProblemCard({ problem, status, onSelect, isSelected, onT
                   {problem.title}
                 </h3>
                 <div className="flex items-center space-x-1 flex-shrink-0">
-                  <span className="text-base">{statusIcons[status]}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -142,7 +136,6 @@ export default function ProblemCard({ problem, status, onSelect, isSelected, onT
               >
                 {problem.title}
               </h3>
-              <span className="text-lg">{statusIcons[status]}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

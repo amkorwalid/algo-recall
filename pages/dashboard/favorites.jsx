@@ -18,6 +18,7 @@ export default function FavoritesPage() {
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [selectedProblems, setSelectedProblems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -28,55 +29,85 @@ export default function FavoritesPage() {
   // Fetch favorites from Supabase
   useEffect(() => {
     const fetchFavorites = async () => {
-      if (!isLoaded || !isSignedIn || !user?.id) return;
+      if (!isLoaded || !isSignedIn || !user?.id) {
+        console.log("Waiting for auth:", { isLoaded, isSignedIn, userId: user?.id });
+        return;
+      }
 
       setLoading(true);
+      setError(null);
       const supabase = supabaseBrowser();
 
       try {
+        console.log("Fetching favorites for user:", user.id);
+
         // Fetch favorite problem IDs for the user
         const { data: favoritesData, error: favoritesError } = await supabase
           .from("favorites")
           .select("problem_id")
           .eq("user_id", user.id);
 
+        console.log("Favorites query result:", { favoritesData, favoritesError });
+
         if (favoritesError) {
           console.error("Error fetching favorites:", favoritesError);
+          setError("Failed to load favorites");
           setLoading(false);
           return;
         }
 
-        const favoriteIdsList = (favoritesData ?? []).map((row) => row.problem_id);
+        if (!favoritesData || favoritesData.length === 0) {
+          console.log("No favorites found for user");
+          setFavoriteIds([]);
+          setFavoriteProblems([]);
+          setLoading(false);
+          return;
+        }
+
+        const favoriteIdsList = favoritesData.map((row) => row.problem_id);
+        console.log("Favorite IDs:", favoriteIdsList);
         setFavoriteIds(favoriteIdsList);
 
-        // If there are favorites, fetch the actual problem data
-        if (favoriteIdsList.length > 0) {
-          const { data: problemsData, error: problemsError } = await supabase
-            .from("generated_questions")
-            .select("*")
-            .in("id", favoriteIdsList);
+        // Fetch the actual problem data
+        const { data: problemsData, error: problemsError } = await supabase
+          .from("generated_questions")
+          .select("*")
+          .in("id", favoriteIdsList);
 
-          if (problemsError) {
-            console.error("Error fetching problems:", problemsError);
-            setLoading(false);
-            return;
-          }
+        console.log("Problems query result:", { problemsData, problemsError });
 
-          // Order problems by favorite order (or you can sort by other criteria)
-          const orderedProblems = favoriteIdsList
-            .map((id) => problemsData.find((p) => p.id === id))
-            .filter(Boolean);
-
-          setFavoriteProblems(orderedProblems);
-        } else {
-          setFavoriteProblems([]);
+        if (problemsError) {
+          console.error("Error fetching problems:", problemsError);
+          setError("Failed to load problem details");
+          setLoading(false);
+          return;
         }
+
+        if (!problemsData || problemsData.length === 0) {
+          console.log("No problems found matching favorite IDs");
+          setFavoriteProblems([]);
+          setLoading(false);
+          return;
+        }
+
+        // Order problems by favorite order - handle type mismatch
+        const orderedProblems = favoriteIdsList
+          .map((id) => problemsData.find((p) => 
+            p.id === id || 
+            String(p.id) === String(id) || 
+            Number(p.id) === Number(id)
+          ))
+          .filter(Boolean);
+
+        console.log("Ordered problems:", orderedProblems);
+        setFavoriteProblems(orderedProblems);
 
         // Load problem status from localStorage
         const savedStatus = JSON.parse(localStorage.getItem("problemStatus") || "{}");
         setProblemStatus(savedStatus);
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error in fetchFavorites:", err);
+        setError("An error occurred while loading favorites");
       }
 
       setLoading(false);
@@ -118,7 +149,7 @@ export default function FavoritesPage() {
   // Start quiz with a single problem
   const handleStartQuiz = (problem) => {
     setSelectedProblem(null);
-    
+
     const quizConfig = {
       problemIds: [problem.id],
       timerEnabled: false,
@@ -215,7 +246,6 @@ export default function FavoritesPage() {
       return;
     }
 
-    // Store favorites info for quiz config page
     localStorage.setItem("preSelectedSource", "favorites");
     router.push("/dashboard/quiz");
   };
@@ -227,6 +257,45 @@ export default function FavoritesPage() {
         style={{ backgroundColor: "#222222" }}
       >
         <div style={{ color: "#FAF3E1" }}>Loading...</div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen" style={{ backgroundColor: "#222222" }}>
+        <Sidebar />
+        <div className="grow relative w-full md:w-auto">
+          <Header />
+          <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 pt-20 md:pt-8">
+            <div
+              className="p-8 rounded-lg border text-center"
+              style={{
+                backgroundColor: "#2A2A2A",
+                borderColor: "rgba(255,255,255,0.08)",
+              }}
+            >
+              <div className="text-5xl mb-4">⚠️</div>
+              <h2
+                className="text-xl font-bold mb-2"
+                style={{ color: "#FAF3E1" }}
+              >
+                Error Loading Favorites
+              </h2>
+              <p className="mb-4" style={{ color: "rgba(245,231,198,0.6)" }}>
+                {error}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 rounded-lg font-medium transition duration-300"
+                style={{ backgroundColor: "#FA8112", color: "#222222" }}
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
